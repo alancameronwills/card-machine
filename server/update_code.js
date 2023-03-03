@@ -8,7 +8,7 @@ const { finished } = require('stream/promises');
 let previousMsg = "";
 
 
-const source = "https://raw.githubusercontent.com/alancameronwills/card-machine/d732c7ea449d7fe32006eb59c57bfc79d2a41b0b";
+const source = "https://raw.githubusercontent.com/alancameronwills/card-machine/master";
 const verbose = !!process.argv?.[2] ;
 process.exitCode = 1;
 
