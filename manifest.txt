@@ -1,0 +1,32 @@
+
+27/02/2023T01:34:02 client/code.html
+01/03/2023T01:57:32 client/css/client.css
+26/02/2023T21:51:42 client/img/back.png
+26/02/2023T21:51:42 client/img/donate-qrcode.png
+26/02/2023T21:51:42 client/img/fwd.png
+26/02/2023T21:51:42 client/img/logo.png
+26/02/2023T21:51:42 client/img/pause.png
+26/02/2023T21:51:42 client/img/pause-inactive.png
+26/02/2023T21:51:42 client/img/slides!brynach/s01.jpg
+26/02/2023T21:51:42 client/img/slides!brynach/s02.jpg
+26/02/2023T21:51:41 client/img/slides!brynach/s03.jpg
+26/02/2023T21:51:41 client/img/slides!brynach/s04.jpg
+26/02/2023T21:51:41 client/img/slides!brynach/s05.jpg
+26/02/2023T21:51:41 client/img/slides!brynach/s06.jpg
+26/02/2023T21:51:41 client/img/slides!brynach/s07.jpg
+26/02/2023T21:51:41 client/img/slides!brynach/s08.jpg
+26/02/2023T21:51:41 client/img/slides!brynach/s09.jpg
+26/02/2023T21:51:42 client/img/slides!brynach/s10.jpg
+26/02/2023T21:51:42 client/img/slides!brynach/s-i-1.jpg
+02/03/2023T21:49:25 client/index.html
+01/03/2023T01:51:35 client/js/client.js
+26/02/2023T21:51:42 client/js/jquery.min.js
+03/03/2023T16:26:45 manifest.txt
+27/02/2023T14:09:48 READ_ME.txt
+28/02/2023T11:23:53 run.sh
+28/02/2023T20:54:45 server.sh
+02/03/2023T09:24:21 server/server.js
+03/03/2023T16:16:13 server/update_code.js
+03/03/2023T16:26:00 update-code.sh
+
+

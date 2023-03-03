@@ -1,0 +1,6 @@
+/server/node_modules/
+/..¬.config/
+/cred-*
+/server/package*
+/server/package.json
+jquery*

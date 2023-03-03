@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+
+
+<head>
+
+	<meta charset="utf-8" />
+
+	<link rel="icon" type="image/png" href="img/logo.png">
+
+	<script>
+
+		function go() {
+
+			fetch ("/card-operation.php?action=login")
+
+			.then (r=> r.json())
+
+			.then (r => {
+
+				document.getElementById("reply").innerHTML = JSON.stringify(r);
+
+				document.getElementById("code").innerHTML = r.Content.device_code.code;
+
+			})
+
+		}
+
+	</script>
+
+</head>
+
+<body onload="go()">
+
+	<div>Code: <span id="code" style="border:2px solid black;padding: 6px;font-size:large;color:blue;"></span></div>
+
+	<p>Use this code in the next five minutes</p>
+
+	
+
+	<p>Tech details:</p>
+
+	<div id="reply" style="font-family:monospace"></div>
+
+</body>
+
+</html>

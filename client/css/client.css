@@ -1,0 +1,338 @@
+@import url('https://fonts.googleapis.com/css?family=Raleway:300,400,700&display=swap');
+
+:root {
+	--buttonColor: #3c9ac9;
+}
+
+#calendarExtract {
+	background-color: rgba(0, 0, 0, 0.4);
+	color: white;
+	font-size: 1vw;
+	margin-right: 20px;
+	padding: 6px;
+}
+
+.calendar td {
+	padding-right: 1vw;
+}
+
+body {
+	font: 3vw Raleway, sans-serif;
+	background-color: black;
+}
+
+p {
+	margin-block-start: 0.2em;
+}
+
+article.touch {
+	cursor: none;
+}
+
+article.touch button {
+	cursor: none;
+}
+
+
+#donation-block {
+	display: flex;
+	justify-content: flex-end;
+	position: fixed;
+	left: 50vw;
+	right: 0;
+	top: 55vh;
+	bottom: 2vh;
+}
+
+.whiteItem {
+	font-size: max(4vw, 4vh);
+	padding: 0.5vw 1.5vw;
+	color: var(--buttonColor);
+	background-color: white;
+	border-radius: 1vw;
+}
+
+#masthead,
+aside,
+footer {
+	display: none !important;
+}
+
+#bgImage {
+	position: fixed;
+	top: 0;
+	left: 0;
+	margin: 0;
+}
+
+article.touch #bgImage {
+	cursor: none;
+}
+
+article.touch .chunk {
+	cursor: none;
+}
+
+#bgImage img {
+	max-width: 100vw;
+	max-height: 100vh;
+	object-fit: contain;
+}
+
+#topHead {
+	position: absolute;
+	top: 10vh;
+	left: 10vw;
+	font-size: max(4.5vw, 4.5vh);
+}
+
+.chunk {
+	position: absolute;
+	color: white;
+	background-color: rgba(0, 0, 0, 0.4);
+	padding: 1vw 3vw 1vw 3vw;
+	border-radius: 1vw;
+}
+
+h1 {
+	font-size: max(4.5vw, 4.5vh);
+	margin-block-start: 0;
+}
+
+h2 {
+	font-size: max(2vw, 2vh);
+	margin-block-start: 0;
+}
+
+h3 {
+	font-size: max(1.6vw, 1.6vh);
+	margin-block-start: 0;
+}
+
+.buttonSet {
+	display: flex;
+	justify-content: right;
+	gap: 2vw;
+}
+
+#amountButtons .whiteItem:active {
+	background-color: lightgray;
+}
+
+article.waiting #moneyButtons {
+	opacity: 0;
+}
+#moneyButtons {
+	transition: all 0.2s ease-in;
+}
+
+.button-block {
+	font-size: max(3vw, 3vh);
+}
+
+.whiteItem {
+	border-width: 3px;
+	border-style: solid;
+	animation: border 2s infinite alternate ease-in-out;
+}
+
+article {
+	user-select: none;
+}
+
+article.pending #moneyButtons {
+	display: none;
+}
+
+article.success #moneyButtons {
+	display: none;
+}
+
+article.disconnected #moneyButtons {
+	display: none;
+}
+
+article:not(.pending) #pleasePresent {
+	display: none;
+}
+
+article:not(.success) #thankyou {
+	display: none;
+}
+
+article:not(.disconnected) #paypal {
+	display: none;
+}
+
+article:not(.pending) #status {
+	display: none;
+}
+
+.bottomLeft {
+	position: absolute;
+	bottom: 10px;
+	left: 10px;
+	color: white;
+	font-size: small;
+	display: flex;
+	justify-content: left;
+}
+
+@keyframes rightarrow {
+	0% {
+		-webkit-transform: translateX(0);
+		opacity: 0.9
+	}
+
+	100% {
+		-webkit-transform: translateX(-2em);
+		opacity: 0.4
+	}
+}
+
+@keyframes border {
+	0% {
+		border-color: rgba(0, 100, 200, 0.4);
+	}
+
+	100% {
+		border-color: rgba(0, 100, 200, 1);
+	}
+}
+
+.arrowcontainer {
+	position: fixed;
+	left: auto !important;
+	right: 0 !important;
+	top: auto !important;
+	bottom: 5vh !important;
+}
+
+.arrow {
+	border-color: transparent;
+	border-style: solid;
+	border-width: 2em 0;
+	display: block;
+	height: 0;
+	margin: 5em auto;
+	opacity: 0.4;
+	text-indent: 0px;
+	transform-origin: 50% 50%;
+	width: 0;
+}
+
+.arrowcontainer>.right {
+	animation: rightarrow 0.6s infinite alternate ease-in-out;
+	border-left: 2em solid #00b6f1;
+}
+
+#bgImage img {
+	position: absolute;
+	top: 0;
+	left: 0;
+	transition: all 1s ease-in;
+}
+
+#extraControls {
+	position: fixed;
+	left: 2vw;
+	top: 20vh;
+	border: 2pt solid black;
+	border-radius: 10px;
+	overflow: hidden;
+	height: 52px;
+	transform: scale(60%);
+	transition: all 1s;
+}
+
+#extraControls button {
+	width: 50px;
+	height: 52px;
+	background-color: rgba(255, 255, 255, 0.6);
+	border: 0;
+}
+
+#left {
+	background-image: url(/img/back.png);
+}
+
+#right {
+	background-image: url(/img/fwd.png);
+}
+
+#extraControls:not(.paused) #pause {
+	background-image: url(/img/pause.png);
+}
+
+#extraControls.paused #pause {
+	background-image: url(/img/pause-inactive.png);
+}
+
+#extraControls button:active {
+	background-color: white;
+}
+
+#extraControls:not(.show) {
+	opacity: 0;
+}
+
+.bottomRight {
+	position: fixed;
+	bottom: 0.5vh;
+	right: 0.5vw;
+	display: flex;
+	height: auto;
+}
+
+#services {
+	position: fixed;
+	top: 0;
+	left: 0;
+	height: 100vh;
+	width: 100vw;
+}
+
+#services img {
+	position: fixed;
+	top: 0;
+	left: 0;
+	height: 100vh;
+	width: 100vw;
+	object-fit: contain;
+}
+
+#servicesButton {
+	/*background-color: white;
+	border-radius: 1vw;*/
+	font-size: 3vh;
+	/*box-shadow: 3px 3px;
+	color: var(--buttonColor);
+	border-color: var(--buttonColor);*/
+}
+
+#servicesCalendar {
+	position: fixed;
+	bottom: 3vh;
+	right: 0;
+	width: 48vw;
+	color: white;
+	font-size: 2.4vh;
+}
+
+.clock {
+	background-color: rgba(0, 0, 0, 0.4);
+	font-size: small;
+	display: flex;
+	justify-content: center;
+	color: white;
+	align-items: flex-end;
+	padding-left: 1em;
+}
+
+.clock #ss {
+	width: 6em;
+}
+
+small {
+	font-size: 10pt;
+}
