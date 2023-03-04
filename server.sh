@@ -1,9 +1,4 @@
 #!/bin/bash
-while true
-do
-	sleep 36000000
-	./update-code.sh
-done &
 cd server
 while true
 do 
