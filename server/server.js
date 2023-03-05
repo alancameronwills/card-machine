@@ -30,7 +30,7 @@ const contentTypes = {
 		"card-operation": cardOperation,
 		"list-slides": listSlides,
 		"ping" : async ()=>{return{body:'pong',status:200, contentType:"text/plain"}},
-		"credentials" : async () =>{return {body: credentials, status:200, contentType:"application/json"}}
+		"credentials" : async () =>{return {body: JSON.stringify(credentials), status:200, contentType:"application/json"}}
 	};
 	
 	function serve(request, response) {
