@@ -1,5 +1,3 @@
-const { resolve } = require("path");
-
 var version = "" + Date.now();
 
 var state = {
@@ -286,7 +284,7 @@ class Services {
 	}
 	show() {
 		$("#services").show(500);
-		calendarLoad("servicesCalendar", 4);
+		window.calendar.calendarLoad("servicesCalendar", 4);
 		clearTimeout(this.timer);
 		this.timer = setTimeout(() => this.hide(), 60000);
 		this.hideDebounceTimer = setTimeout(() => {
@@ -310,10 +308,11 @@ class Credentials {
 		this.fetchCredentials();
 	}
 	async fetchCredentials() {
-		this.cred = await fetch("credentials").then(r => r.json);
+		this.cred = await fetch("credentials").then(r => r.json());
 	}
 	async get() {
-		return waitNotNull(()=>this.cred);
+		await waitNotNull(()=>this.cred);
+		return this.cred;
 	}
 }
 
@@ -321,7 +320,8 @@ class Calendar {
 	constructor() {
 		(async () => {
 			this.credentials = await window.credentials.get();
-			nowAndEvery(6 * 60 * 1000, () => this.calendarLoad("calendarExtract", 2));
+			//nowAndEvery(6 * 60 * 1000, () => this.calendarLoad("calendarExtract", 2));
+			this.calendarLoad("calendarExtract", 2)
 		})();
 	}
 
