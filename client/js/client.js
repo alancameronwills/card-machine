@@ -1,3 +1,5 @@
+const { resolve } = require("path");
+
 var version = "" + Date.now();
 
 var state = {
@@ -51,7 +53,7 @@ class CardTerminal {
 	 * @param {*} pingSeconds Seconds between pings
 	 * @param {*} successPingSlowFactor Wait this multiple on successful ping
 	 */
-	constructor(pingSeconds=10, successPingSlowFactor = 3) {
+	constructor(pingSeconds = 10, successPingSlowFactor = 3) {
 		this.pingInterval = pingSeconds;
 		this.slowPingFactor = successPingSlowFactor;
 		this.pingCheck();
@@ -190,7 +192,7 @@ class Slides {
 	}
 	async go() {
 		let slideSet = await this.getSlideSet();
-		if (slideSet.info.length>0) {
+		if (slideSet.info.length > 0) {
 			$("#servicesImg")[0].src = `${slideSet.info[0]}?v=${version}`;
 		}
 		let figure = $("#bgImage");
@@ -234,16 +236,16 @@ class Slides {
 			.then(r => r.json())
 			.then(r => {
 				for (let item of r) {
-					if (item.indexOf('-i-')>=0)
+					if (item.indexOf('-i-') >= 0)
 						infoSlides.push(item);
-					else 
+					else
 						showSlides.push(item);
 				}
 			})
 			.catch(err => {
 				showSlides = infoSlides = ["/img/noShowScreen.jpg"];
 			});
-		return {show:showSlides,info:infoSlides};
+		return { show: showSlides, info: infoSlides };
 	}
 
 }
@@ -286,7 +288,7 @@ class Services {
 		$("#services").show(500);
 		calendarLoad("servicesCalendar", 4);
 		clearTimeout(this.timer);
-		this.timer = setTimeout(()=>this.hide(), 60000);
+		this.timer = setTimeout(() => this.hide(), 60000);
 		this.hideDebounceTimer = setTimeout(() => {
 			clearTimeout(this.hideDebounceTimer);
 			this.hideDebounceTimer = null;
@@ -302,31 +304,54 @@ class Services {
 	}
 }
 
-function calendarLoad(location, rows = 4) {
-	let apiKey = "AIzaSyDZJ9Jpob7yXPEzXkImG5ewI78-TodTY8A";
-	let calendar = "764cpqr7292e2rk4265cd84u7c%40group.calendar.google.com";
-	let serviceWords = ["communion", "prayer", "service", "vigil", "mass"];
-	let today = new Date();
-	let todayMonth = new Date();
-	todayMonth.setMonth(todayMonth.getMonth() + 1);
-	fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendar}/events?timeMin=${today.toISOString()}&timeMax=${todayMonth.toISOString()}&singleEvents=true&orderBy=startTime&key=${apiKey}`)
-		.then(r => r.json())
-		.then(r => {
-			let table = ["<table class='calendar'><tr><td>"];
-			let rowCount = 0;
-			r.items.forEach(item => {
-				let when = new Date(item.start.dateTime);
-				let summaryLC = item.summary.toLowerCase();
-				if (serviceWords.some(s => summaryLC.indexOf(s) >= 0)) {
-					let whenDate = new Date(when);
-					if (rowCount++ < rows) {
-						table.push(`${item.summary} </td><td> ${whenDate.getHours()}:${whenDate.getMinutes()} ${whenDate.toDateString()}</td></tr><tr><td>`);
+class Credentials {
+	constructor() {
+		this.cred = null;
+		this.fetchCredentials();
+	}
+	async fetchCredentials() {
+		this.cred = await fetch("credentials").then(r => r.json);
+	}
+	async get() {
+		return waitNotNull(()=>this.cred);
+	}
+}
+
+class Calendar {
+	constructor() {
+		(async () => {
+			this.credentials = await window.credentials.get();
+			nowAndEvery(6 * 60 * 1000, () => this.calendarLoad("calendarExtract", 2));
+		})();
+	}
+
+	calendarLoad(location, rows = 4) {
+		let serviceWords = ["communion", "prayer", "service", "vigil", "mass"];
+		let today = new Date();
+		let todayMonth = new Date();
+		todayMonth.setMonth(todayMonth.getMonth() + 1);
+		fetch(`https://www.googleapis.com/calendar/v3/calendars/${this.credentials.googleCalendar}`
+			+ `/events?timeMin=${today.toISOString()}&timeMax=${todayMonth.toISOString()}`
+			+ `&singleEvents=true&orderBy=startTime&key=${this.credentials.googleApiKey}`)
+			.then(r => r.json())
+			.then(r => {
+				let table = ["<table class='calendar'><tr><td>"];
+				let rowCount = 0;
+				r.items.forEach(item => {
+					let when = new Date(item.start.dateTime);
+					let summaryLC = item.summary.toLowerCase();
+					if (serviceWords.some(s => summaryLC.indexOf(s) >= 0)) {
+						let whenDate = new Date(when);
+						if (rowCount++ < rows) {
+							table.push(`${item.summary} </td><td> ${whenDate.getHours()}:${whenDate.getMinutes()} ${whenDate.toDateString()}</td></tr><tr><td>`);
+						}
 					}
-				}
+				});
+				table.push("</td></tr></table>");
+				document.getElementById(location).innerHTML = table.join("");
 			});
-			table.push("</td></tr></table>");
-			document.getElementById(location).innerHTML = table.join("");
-		});
+	}
+
 }
 
 class RomanClock {
@@ -376,13 +401,32 @@ function nowAndEvery(interval, fn) {
 	return setInterval(fn, interval);
 }
 
+function waitNotNull(property, interval=200, timeout=2000) {
+	return new Promise ((resolve, reject) =>{
+		const countOut = timeout/interval;
+		let count = 0;
+		let pollTimer = setInterval(
+			() => {if (property()) {
+				clearInterval(pollTimer);
+				resolve(property());
+			} else {
+				if (count++ > countOut) {
+					clearInterval(pollTimer);
+					reject("timeout");
+				}
+			}}
+		, interval)
+	})
+}
+
 
 $(() => {
 	window.buttons = new Buttons();
 	window.slides = new Slides();
 	window.services = new Services();
-	window.cardTerminal = new CardTerminal(10,3);
-	nowAndEvery(6 * 60 * 1000, () => calendarLoad("calendarExtract", 2));
+	window.cardTerminal = new CardTerminal(10, 3);
+	window.credentials = new Credentials();
+	window.calendar = new Calendar();
 	window.romanClock = new RomanClock();
 	analytics("Startup", location.origin);
 })

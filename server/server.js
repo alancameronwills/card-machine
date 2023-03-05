@@ -18,13 +18,6 @@ const contentTypes = {
 	".txt": "text/plain"
 };
 
-const handlers = {
-	"get-url": getUrl,
-	"card-operation": cardOperation,
-	"list-slides": listSlides,
-	"ping" : async ()=>{return{body:'pong',status:200, contentType:"text/plain"}}
-};
-
 (async () => {
 	let root = await fs.realpath('.');
 	root = root.replace("/server", "");
@@ -32,6 +25,14 @@ const handlers = {
 	log("Client root: " + clientRoot);
 	const credentials = await getCredentials(root);
 
+	const handlers = {
+		"get-url": getUrl,
+		"card-operation": cardOperation,
+		"list-slides": listSlides,
+		"ping" : async ()=>{return{body:'pong',status:200, contentType:"text/plain"}},
+		"credentials" : async () =>{return {body: credentials, status:200, contentType:"application/json"}}
+	};
+	
 	function serve(request, response) {
 		try {
 			let req = parseReq(request);
