@@ -1,6 +1,6 @@
-var version = "" + Date.now();
+let version = "" + Date.now();
 
-var state = {
+let state = {
 	ready: () => {
 		// Showing money buttons, ready for action
 		$("article").removeClass("pending");

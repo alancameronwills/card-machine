@@ -174,7 +174,8 @@ async function cardOperation(params, credentials) {
 			return { body: textData, status: reply.status, contentType: "text/plain" };
 		}
 	} catch (err) {
-		log(`Card operation ${params.action} ${util.inspect(err)}`);
+		if (err?.cause?.code == "EAI_AGAIN") log("DNS fail ") 
+		else log(`Card operation ${params.action} ${util.inspect(err)}`);
 		verbose(`Card operation: ${url} \n ${util.inspect(http)}\nError: ${util.inspect(err)}`);
 		return { body: util.inspect(err), status: 400, contentType: "application/json"};
 	}
