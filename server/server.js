@@ -174,8 +174,9 @@ async function cardOperation(params, credentials) {
 			return { body: textData, status: reply.status, contentType: "text/plain" };
 		}
 	} catch (err) {
-		if (err?.cause?.code == "EAI_AGAIN") log("DNS fail ") 
-		else log(`Card operation ${params.action} ${util.inspect(err)}`);
+		let errReport = util.inspect(err);
+		if (errReport.indexOf("fetch failed")>=0) errReport = errReport.match(/cause:.*$/)[0] || errReport;
+		log("   "+errReport);
 		verbose(`Card operation: ${url} \n ${util.inspect(http)}\nError: ${util.inspect(err)}`);
 		return { body: util.inspect(err), status: 400, contentType: "application/json"};
 	}
@@ -186,8 +187,8 @@ async function listSlides(params, credentials, clientRoot) {
 	let slidesDir = "";
 	for (let item of imgdir) {
 		if(item.isDirectory && item.name.startsWith("slides") 
-			&& (item.name.indexOf("!")<0 || !credentials?.fileFilter 
-				|| item.name.indexOf(credentials.fileFilter>=0))) {
+			&& (item.name.indexOf("!")<0 || !credentials?.location 
+				|| item.name.indexOf(credentials.location>=0))) {
 				slidesDir = item.name;
 				break;
 		}

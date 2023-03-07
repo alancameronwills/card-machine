@@ -12,9 +12,23 @@ const source = "https://raw.githubusercontent.com/alancameronwills/card-machine/
 const verbose = !!process.argv?.[2] ;
 process.exitCode = 1;
 
+/**
+ * Get the remote manifest and download any item that is new or has a changed version.
+ * Manifest format: 
+ * - manifest ::= {<item> \n}*
+ * - item ::= <version> <space> <relative file path>
+ * - version is a string without spaces, typically a date-timestamp
+ * To make an item only be delivered to one client, include
+ * "!<location>" somewhere in the file path 
+ * e.g. client/img/slides!brynach/s01.jpg
+ * where <location> is specified in cred*card-machine.config
+ */
+
 async function go() {
 	log ("v 1");
 	let root = await fs.realpath('.');
+	let credentials = await getCredentials(root);
+
 	let manifestLocal = "", manifestRemote = "";
 	try {
 		manifestLocal = await fs.readFile(`${root}/manifest.txt`, "latin1");
@@ -37,7 +51,7 @@ async function go() {
 			const name_timestamp = line.split(/[ \t#]+/, 2);
 			log("Scan: " + line + util.inspect(name_timestamp), verbose);
 			const [name, timeStamp] = name_timestamp.length > 1 ? [name_timestamp[1].trim(), name_timestamp[0].trim()] : [name_timestamp[0].trim(), ""];
-			if (name) {
+			if (name && (name.indexOf('!')<0 || name.indexOf('!'+(credentials.location||""))>=0)) {
 				await action(name, timeStamp);
 			}
 		}
@@ -81,6 +95,21 @@ function directory(f) {
 
 function isBinary(fileName) {
 	return [".jpg", ".jpeg", ".png", ".gif", ".pdf"].indexOf((fileName.toLowerCase().match(/(\.[^.]+)$/)?.[1])) >= 0;
+}
+
+
+// Put the credentials in a directory with a random name beginning 'cred-'
+// Directories can't be read by http.
+// Must be valid JSON
+async function getCredentials(root) {
+	let config = {};
+	let dir = await fs.readdir(root);
+	for (let item of dir) {
+		if (item.startsWith("cred-")) {
+			config = JSON.parse(await fs.readFile(`${root}/${item}/card-machine.config`));
+		}
+	}
+	return config;
 }
 
 go();
