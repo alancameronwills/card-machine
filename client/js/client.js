@@ -326,6 +326,7 @@ class Calendar {
 	}
 
 	calendarLoad(location, rows = 4) {
+		if (!this.credentials.googleCalendar) return;
 		let serviceWords = ["communion", "prayer", "service", "vigil", "mass"];
 		let today = new Date();
 		let todayMonth = new Date();
@@ -428,5 +429,6 @@ $(() => {
 	window.credentials = new Credentials();
 	window.calendar = new Calendar();
 	window.romanClock = new RomanClock();
+	$("#pleaseSupport").text(`Please support ${window.credentials.churchName}`);
 	analytics("Startup", location.origin);
 })
