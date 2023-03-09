@@ -183,7 +183,7 @@ async function cardOperation(params, credentials) {
 		}
 	} catch (err) {
 		let errReport = util.inspect(err);
-		if (errReport.indexOf("fetch failed") >= 0) errReport = errReport.match(/cause:.*$/)[0] || errReport;
+		if (errReport.indexOf("fetch failed") >= 0) errReport = errReport.match(/cause:.*$/)?.[0] || errReport;
 		log("   " + errReport);
 		verbose(`Card operation: ${url} \n ${util.inspect(http)}\nError: ${util.inspect(err)}`);
 		return { body: util.inspect(err), status: 400, contentType: "application/json" };
@@ -223,7 +223,7 @@ async function getCredentials(root) {
 
 async function getUrl(params) {
 	let url = "https://" + params["u"];
-	log("Get url: " + url);
+	verbose("Get url: " + url);
 	try {
 		let response = await fetch(url);
 		replyType = response.headers.get("content-type");
@@ -237,8 +237,8 @@ async function getUrl(params) {
 			body: reply
 		}
 	} catch (err) {
-		log("Error: " + JSON.stringify(err));
-		return { status: 500, contentType: "text/plain", body: JSON.stringify(err) };
+		log("Error: " + util.inspect(err));
+		return { status: 500, contentType: "text/plain", body: util.inspect(err) };
 	}
 }
 

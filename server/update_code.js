@@ -25,7 +25,6 @@ process.exitCode = 1;
  */
 
 async function go() {
-	log ("v 1");
 	let root = await fs.realpath('.');
 	let credentials = await getCredentials(root);
 
