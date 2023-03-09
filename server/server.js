@@ -29,10 +29,11 @@ const contentTypes = {
 		"get-url": getUrl,
 		"card-operation": cardOperation,
 		"list-slides": listSlides,
-		"ping" : async ()=>{return{body:'pong',status:200, contentType:"text/plain"}},
-		"credentials" : async () =>{return {body: JSON.stringify(credentials), status:200, contentType:"application/json"}}
+		"ping": async () => { return { body: 'pong', status: 200, contentType: "text/plain" } },
+		"calendar": calendar,
+		"credentials" : async () =>{return {body: `{"churchName":"${credentials.churchName}"}`, status:200, contentType:"application/json"}}
 	};
-	
+
 	function serve(request, response) {
 		try {
 			let req = parseReq(request);
@@ -41,7 +42,7 @@ const contentTypes = {
 			req.contentType = contentType;
 
 			if (!contentType) {
-				let recognized=false;
+				let recognized = false;
 				for (let k of Object.keys(handlers)) {
 					if (req.path.indexOf("/" + k) == 0) {
 						(async () => {
@@ -175,22 +176,22 @@ async function cardOperation(params, credentials) {
 		}
 	} catch (err) {
 		let errReport = util.inspect(err);
-		if (errReport.indexOf("fetch failed")>=0) errReport = errReport.match(/cause:.*$/)[0] || errReport;
-		log("   "+errReport);
+		if (errReport.indexOf("fetch failed") >= 0) errReport = errReport.match(/cause:.*$/)[0] || errReport;
+		log("   " + errReport);
 		verbose(`Card operation: ${url} \n ${util.inspect(http)}\nError: ${util.inspect(err)}`);
-		return { body: util.inspect(err), status: 400, contentType: "application/json"};
+		return { body: util.inspect(err), status: 400, contentType: "application/json" };
 	}
 }
 
 async function listSlides(params, credentials, clientRoot) {
-	let imgdir = await fs.readdir(`${clientRoot}/img`, {withFileTypes:true});
+	let imgdir = await fs.readdir(`${clientRoot}/img`, { withFileTypes: true });
 	let slidesDir = "";
 	for (let item of imgdir) {
-		if(item.isDirectory && item.name.startsWith("slides") 
-			&& (item.name.indexOf("!")<0 || !credentials?.location 
-				|| item.name.indexOf(credentials.location>=0))) {
-				slidesDir = item.name;
-				break;
+		if (item.isDirectory && item.name.startsWith("slides")
+			&& (item.name.indexOf("!") < 0 || !credentials?.location
+				|| item.name.indexOf(credentials.location >= 0))) {
+			slidesDir = item.name;
+			break;
 		}
 	}
 	let dir = await fs.readdir(`${clientRoot}/img/${slidesDir}`);
@@ -198,27 +199,6 @@ async function listSlides(params, credentials, clientRoot) {
 	return { body: JSON.stringify(urlDir), contentType: "application/json", status: 200 };
 }
 
-
-async function getUrl(params) {
-	let url = "https://" + params["u"];
-	console.log("Get url: " + url);
-	try {
-		let response = await fetch(url);
-		replyType = response.headers.get("content-type");
-		console.log(response.status);
-		console.log(util.inspect(response.headers));
-		console.log("Content-Type: " + replyType);
-		let reply = await response.text();
-		return {
-			status: response.status,
-			contentType: response.headers.get("content-type"),
-			body: reply
-		}
-	} catch (err) {
-		console.log("Error: " + JSON.stringify(err));
-		return { status: 500, contentType: "text/plain", body: JSON.stringify(err) };
-	}
-}
 
 // Put the credentials in a directory with a random name beginning 'cred-'
 // Directories can't be read by http.
@@ -232,6 +212,38 @@ async function getCredentials(root) {
 		}
 	}
 	return config;
+}
+
+async function getUrl(params) {
+	let url = "https://" + params["u"];
+	log("Get url: " + url);
+	try {
+		let response = await fetch(url);
+		replyType = response.headers.get("content-type");
+		verbose(response.status);
+		verbose(util.inspect(response.headers));
+		verbose("Content-Type: " + replyType);
+		let reply = await response.text();
+		return {
+			status: response.status,
+			contentType: response.headers.get("content-type"),
+			body: reply
+		}
+	} catch (err) {
+		log("Error: " + JSON.stringify(err));
+		return { status: 500, contentType: "text/plain", body: JSON.stringify(err) };
+	}
+}
+
+async function calendar(params, credentials) {
+	if (!credentials.googleCalendar) return{status:400,contentType:"text/plain", body:"no calendar credentials"};
+	let today = new Date();
+	let todayMonth = new Date();
+	todayMonth.setMonth(todayMonth.getMonth() + 1);
+	let url = `www.googleapis.com/calendar/v3/calendars/${credentials.googleCalendar}`
+		+ `/events?timeMin=${today.toISOString()}&timeMax=${todayMonth.toISOString()}`
+		+ `&singleEvents=true&orderBy=startTime&key=${credentials.googleApiKey}`;
+	return await getUrl({u:url});
 }
 
 function parseReq(request, defaultPage = "/index.html") {

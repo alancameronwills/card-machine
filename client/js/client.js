@@ -318,22 +318,13 @@ class Credentials {
 
 class Calendar {
 	constructor() {
-		(async () => {
-			this.credentials = await window.credentials.get();
 			//nowAndEvery(6 * 60 * 1000, () => this.calendarLoad("calendarExtract", 2));
 			this.calendarLoad("calendarExtract", 2)
-		})();
 	}
 
 	calendarLoad(location, rows = 4) {
-		if (!this.credentials.googleCalendar) return;
 		let serviceWords = ["communion", "prayer", "service", "vigil", "mass"];
-		let today = new Date();
-		let todayMonth = new Date();
-		todayMonth.setMonth(todayMonth.getMonth() + 1);
-		fetch(`https://www.googleapis.com/calendar/v3/calendars/${this.credentials.googleCalendar}`
-			+ `/events?timeMin=${today.toISOString()}&timeMax=${todayMonth.toISOString()}`
-			+ `&singleEvents=true&orderBy=startTime&key=${this.credentials.googleApiKey}`)
+		fetch('/calendar')
 			.then(r => r.json())
 			.then(r => {
 				let table = ["<table class='calendar'><tr><td>"];
@@ -421,7 +412,7 @@ function waitNotNull(property, interval=200, timeout=2000) {
 }
 
 
-$(() => {
+$(async () => {
 	window.buttons = new Buttons();
 	window.slides = new Slides();
 	window.services = new Services();
@@ -429,6 +420,6 @@ $(() => {
 	window.credentials = new Credentials();
 	window.calendar = new Calendar();
 	window.romanClock = new RomanClock();
-	$("#pleaseSupport").text(`Please support ${window.credentials.churchName}`);
+	$("#pleaseSupport").text(`Please support ${(await window.credentials.get()).churchName}`);
 	analytics("Startup", location.origin);
 })
