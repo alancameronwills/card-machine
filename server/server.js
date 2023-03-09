@@ -29,9 +29,16 @@ const contentTypes = {
 		"get-url": getUrl,
 		"card-operation": cardOperation,
 		"list-slides": listSlides,
-		"ping": async () => { return { body: 'pong', status: 200, contentType: "text/plain" } },
 		"calendar": calendar,
-		"credentials" : async () =>{return {body: `{"churchName":"${credentials.churchName}"}`, status:200, contentType:"application/json"}}
+		"ping": async () => { return { body: 'pong', status: 200, contentType: "text/plain" } },
+		"config": async () => {
+			let configs = ["churchName", "offline"];
+			return {
+				body: JSON.stringify(configs.reduce((o, v) => {o[v] = credentials[v] || ""; return o;}, {})),
+				status: 200, 
+				contentType: "application/json"
+			}
+		}
 	};
 
 	function serve(request, response) {
@@ -187,12 +194,12 @@ async function listSlides(params, credentials, clientRoot) {
 	let imgdir = await fs.readdir(`${clientRoot}/img`, { withFileTypes: true });
 	let slidesDir = "";
 	for (let item of imgdir) {
-		if (item.isDirectory && item.name.startsWith("slides")
-			&& (item.name.indexOf("!") < 0 || !credentials?.location
-				|| item.name.indexOf(credentials.location >= 0))) {
+		if (item.isDirectory && item.name.startsWith("slides")) {
+			if (item.name.indexOf("!") < 0 || !credentials?.location
+				|| item.name.indexOf(credentials.location) >= 0) {
 			slidesDir = item.name;
 			break;
-		}
+		}}
 	}
 	let dir = await fs.readdir(`${clientRoot}/img/${slidesDir}`);
 	let urlDir = dir.map(d => `/img/${slidesDir}/${d}`);
@@ -236,14 +243,14 @@ async function getUrl(params) {
 }
 
 async function calendar(params, credentials) {
-	if (!credentials.googleCalendar) return{status:400,contentType:"text/plain", body:"no calendar credentials"};
+	if (!credentials.googleCalendar) return { status: 400, contentType: "text/plain", body: "no calendar credentials" };
 	let today = new Date();
 	let todayMonth = new Date();
 	todayMonth.setMonth(todayMonth.getMonth() + 1);
 	let url = `www.googleapis.com/calendar/v3/calendars/${credentials.googleCalendar}`
 		+ `/events?timeMin=${today.toISOString()}&timeMax=${todayMonth.toISOString()}`
 		+ `&singleEvents=true&orderBy=startTime&key=${credentials.googleApiKey}`;
-	return await getUrl({u:url});
+	return await getUrl({ u: url });
 }
 
 function parseReq(request, defaultPage = "/index.html") {

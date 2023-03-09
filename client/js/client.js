@@ -302,46 +302,34 @@ class Services {
 	}
 }
 
-class Credentials {
-	constructor() {
-		this.cred = null;
-		this.fetchCredentials();
-	}
-	async fetchCredentials() {
-		this.cred = await fetch("credentials").then(r => r.json());
-	}
-	async get() {
-		await waitNotNull(()=>this.cred);
-		return this.cred;
-	}
-}
-
 class Calendar {
 	constructor() {
-			//nowAndEvery(6 * 60 * 1000, () => this.calendarLoad("calendarExtract", 2));
-			this.calendarLoad("calendarExtract", 2)
+		nowAndEvery(60 * 60 * 1000, () => this.calendarLoad("calendarExtract", 2));
+		//this.calendarLoad("calendarExtract", 2)
 	}
 
 	calendarLoad(location, rows = 4) {
 		let serviceWords = ["communion", "prayer", "service", "vigil", "mass"];
-		fetch('/calendar')
-			.then(r => r.json())
-			.then(r => {
-				let table = ["<table class='calendar'><tr><td>"];
-				let rowCount = 0;
-				r.items.forEach(item => {
-					let when = new Date(item.start.dateTime);
-					let summaryLC = item.summary.toLowerCase();
-					if (serviceWords.some(s => summaryLC.indexOf(s) >= 0)) {
-						let whenDate = new Date(when);
-						if (rowCount++ < rows) {
-							table.push(`${item.summary} </td><td> ${whenDate.getHours()}:${whenDate.getMinutes()} ${whenDate.toDateString()}</td></tr><tr><td>`);
+		try {
+			fetch('/calendar')
+				.then(r => r.json())
+				.then(r => {
+					let table = ["<table class='calendar'><tr><td>"];
+					let rowCount = 0;
+					r.items.forEach(item => {
+						let when = new Date(item.start.dateTime);
+						let summaryLC = item.summary.toLowerCase();
+						if (serviceWords.some(s => summaryLC.indexOf(s) >= 0)) {
+							let whenDate = new Date(when);
+							if (rowCount++ < rows) {
+								table.push(`${item.summary} </td><td> ${whenDate.getHours()}:${whenDate.getMinutes()} ${whenDate.toDateString()}</td></tr><tr><td>`);
+							}
 						}
-					}
+					});
+					table.push("</td></tr></table>");
+					document.getElementById(location).innerHTML = table.join("");
 				});
-				table.push("</td></tr></table>");
-				document.getElementById(location).innerHTML = table.join("");
-			});
+		} catch (e) { }
 	}
 
 }
@@ -393,33 +381,39 @@ function nowAndEvery(interval, fn) {
 	return setInterval(fn, interval);
 }
 
-function waitNotNull(property, interval=200, timeout=2000) {
-	return new Promise ((resolve, reject) =>{
-		const countOut = timeout/interval;
+function waitNotNull(property, interval = 200, timeout = 2000) {
+	return new Promise((resolve, reject) => {
+		const countOut = timeout / interval;
 		let count = 0;
 		let pollTimer = setInterval(
-			() => {if (property()) {
-				clearInterval(pollTimer);
-				resolve(property());
-			} else {
-				if (count++ > countOut) {
+			() => {
+				if (property()) {
 					clearInterval(pollTimer);
-					reject("timeout");
+					resolve(property());
+				} else {
+					if (count++ > countOut) {
+						clearInterval(pollTimer);
+						reject("timeout");
+					}
 				}
-			}}
-		, interval)
+			}
+			, interval)
 	})
 }
 
+async function SetPageHoles() {
+	let configs = await fetch("config").then(r => r.json());
+	$("#pleaseSupport").text(`Please support ${configs.churchName}`);
+	$("#offline").html(configs.offline);
+}
 
 $(async () => {
 	window.buttons = new Buttons();
 	window.slides = new Slides();
 	window.services = new Services();
 	window.cardTerminal = new CardTerminal(10, 3);
-	window.credentials = new Credentials();
 	window.calendar = new Calendar();
 	window.romanClock = new RomanClock();
-	$("#pleaseSupport").text(`Please support ${(await window.credentials.get()).churchName}`);
+	SetPageHoles();
 	analytics("Startup", location.origin);
 })
