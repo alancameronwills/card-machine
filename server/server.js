@@ -24,6 +24,7 @@ const contentTypes = {
 	const clientRoot = `${root}/client`;
 	log("Client root: " + clientRoot);
 	const credentials = await getCredentials(root);
+	verbose(JSON.stringify(credentials));
 
 	const handlers = {
 		"get-url": getUrl,
@@ -170,6 +171,9 @@ async function cardOperation(params, credentials) {
 		if (contentType.indexOf("json") > 0) {
 			let jsonData = await reply.json();
 			verbose("Reply Data: " + JSON.stringify(jsonData));
+			if (jsonData?.action?.status=="CANCELED") {
+				log(`Canceled: ${jsonData?.action.type} ${jsonData?.action?.cancel_reason}`);
+			}
 			return {
 				body: JSON.stringify(
 					{ Content: jsonData, Response: reply.status }
