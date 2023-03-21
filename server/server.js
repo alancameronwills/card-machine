@@ -1,6 +1,7 @@
 const http = require('http');
 const util = require('util');
 const fs = require('fs/promises');
+const { argv } = require('process');
 
 const logverbose = false;
 
@@ -23,7 +24,7 @@ const contentTypes = {
 	root = root.replace("/server", "");
 	const clientRoot = `${root}/client`;
 	log("Client root: " + clientRoot);
-	const credentials = await getCredentials(root);
+	const credentials = await getCredentials(root, argv?.[3]);
 	verbose(JSON.stringify(credentials));
 
 	const handlers = {
@@ -33,7 +34,7 @@ const contentTypes = {
 		"calendar": calendar,
 		"ping": async () => { return { body: 'pong', status: 200, contentType: "text/plain" } },
 		"config": async () => {
-			let configs = ["churchName", "offline"];
+			let configs = ["churchName", "offline", "location"];
 			return {
 				body: JSON.stringify(configs.reduce((o, v) => {o[v] = credentials[v] || ""; return o;}, {})),
 				status: 200, 
@@ -214,14 +215,15 @@ async function listSlides(params, credentials, clientRoot) {
 // Put the credentials in a directory with a random name beginning 'cred-'
 // Directories can't be read by http.
 // Must be valid JSON
-async function getCredentials(root) {
+async function getCredentials(root, filter) {
 	let config = {};
 	let dir = await fs.readdir(root);
 	for (let item of dir) {
-		if (item.startsWith("cred-")) {
+		if (item.startsWith("cred-") && (!filter || item.indexOf(filter)>=0)) {
 			config = JSON.parse(await fs.readFile(`${root}/${item}/card-machine.config`));
 		}
 	}
+	log(config?.churchName);
 	return config;
 }
 

@@ -168,7 +168,7 @@ class CardTerminal {
 							state.disconnected();
 							analytics("Offline");
 						}
-						analytics("Ping", e.message);
+						analytics("Ping " + e.message);
 					})
 					.finally(() => {
 						jQuery("#pingstatus").html(pingIndicator);
@@ -305,7 +305,6 @@ class Services {
 class Calendar {
 	constructor() {
 		nowAndEvery(60 * 60 * 1000, () => this.calendarLoad("calendarExtract", 2));
-		//this.calendarLoad("calendarExtract", 2)
 	}
 
 	calendarLoad(location, rows = 4) {
@@ -359,20 +358,24 @@ class RomanClock {
 		while (ge(1, "I")) { }
 		return r;
 	}
-
 }
 
 var previousAnalyticsMessage = "";
+var lastTelemetry = 0;
 function analytics(message, transaction) {
-	let s = message;
+	let locatedMessage = (window?.configs?.location || "") + " " + message;
+	let logMessage = locatedMessage;
 	if (transaction) {
 		transaction.age = (Date.now() - transaction.start) / 1000;
-		s += " " + JSON.stringify(transaction);
+		logMessage += " " + JSON.stringify(transaction);
 	}
-	if (s != previousAnalyticsMessage) {
-		console.log(new Date().toISOString() + " " + s);
-		previousAnalyticsMessage = s;
-		appInsights.trackEvent({ name: message, properties: (transaction ? { p1: transaction } : null) });
+	if (logMessage != previousAnalyticsMessage || (Date.now() - lastTelemetry)/60000 > 60) {
+		console.log(new Date().toISOString() + " " + logMessage);
+		previousAnalyticsMessage = logMessage;
+		lastTelemetry = Date.now();
+		let properties = {location:window?.configs?.location};
+		if (transaction) properties.transaction = transaction;
+		appInsights.trackEvent({ name: locatedMessage, properties: properties});
 	}
 }
 
@@ -405,6 +408,7 @@ async function SetPageHoles() {
 	let configs = await fetch("config").then(r => r.json());
 	$("#pleaseSupport").text(`Please support ${configs.churchName}`);
 	$("#offline").html(configs.offline);
+	return configs;
 }
 
 $(async () => {
@@ -414,6 +418,6 @@ $(async () => {
 	window.cardTerminal = new CardTerminal(10, 3);
 	window.calendar = new Calendar();
 	window.romanClock = new RomanClock();
-	SetPageHoles();
-	analytics("Startup", location.origin);
+	window.configs = await SetPageHoles();
+	analytics("Startup " + location.origin);
 })
