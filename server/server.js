@@ -188,10 +188,10 @@ async function cardOperation(params, credentials) {
 		}
 	} catch (err) {
 		let errReport = util.inspect(err);
-		if (errReport.indexOf("fetch failed") >= 0) errReport = errReport.match(/cause:.*$/)?.[0] || errReport;
+		if (errReport.indexOf("fetch failed") >= 0) errReport = errReport.match(/cause:(.*)\n/)?.[1] || errReport;
 		log("   " + errReport);
 		verbose(`Card operation: ${url} \n ${util.inspect(http)}\nError: ${util.inspect(err)}`);
-		return { body: util.inspect(err), status: 400, contentType: "application/json" };
+		return { body: JSON.stringify({fetchFail:errReport}), status: 400, contentType: "application/json" };
 	}
 }
 
