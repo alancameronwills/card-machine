@@ -143,22 +143,23 @@ class CardTerminal {
 							case "COMPLETED":
 								pingid = Date.now();
 								pingIndicator = "";
-								state.connected();
-								analytics("Connected");
-								pingCountDown = this.slowPingFactor;
 								break;
 							case "PENDING":
 								pingIndicator += "_";
-								if (pingIndicator.length > 2) {
-									state.disconnected();
-									analytics("Disconnected");
-								}
 								break;
 							default:
 								// Transaction has timed out. Refresh idempotency, but keep counting 
 								pingid = Date.now();
 								pingIndicator += "-";
 								break;
+						}
+						if (pingIndicator.length == 0) {
+							state.connected();
+							analytics("Connected");
+							pingCountDown = this.slowPingFactor;
+						} else if (pingIndicator.length > 3) {
+							state.disconnected();
+							analytics("Disconnected");
 						}
 					})
 					.catch((e) => {
@@ -171,7 +172,7 @@ class CardTerminal {
 						analytics("Ping " + e.message);
 					})
 					.finally(() => {
-						jQuery("#pingstatus").html(pingIndicator);
+						jQuery("#pingstatus").html(pingIndicator.slice(-40));
 					});
 			} else {
 				jQuery("#pingstatus").html("|");
