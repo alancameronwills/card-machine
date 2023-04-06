@@ -56,6 +56,7 @@ class CardTerminal {
 		this.slowPingFactor = successPingSlowFactor;
 		this.pingCheck();
 	}
+	/*
 	donate(amount) {
 		state.waiting();
 		const idem = Date.now();
@@ -83,13 +84,32 @@ class CardTerminal {
 			})
 			.catch(e => console.log("Donate fetch: " + e.message));
 	}
+	*/
+	donate(amount) {
+		let transaction = {
+			idem: Date.now(),
+			id: null,
+			start: Date.now(),
+			amount: amount
+		};
+		state.waiting();
+		this.checkoutStatus(transaction);
+		let timer = setInterval(() => {
+			if (state.isPending()) {
+				this.checkoutStatus(transaction);
+			}
+			else {
+				clearInterval(timer);
+			}
+		}, 1000);
+	}
 	checkoutStatus(transaction) {
 		fetch(`/card-operation.php?amount=${transaction.amount}&idem=${transaction.idem}&nocache=${Date.now()}`)
 			.then(r => r.json())
 			.then(ar => {
 				if (ar.Response == "200") {
 					let status = ar?.Content?.checkout?.status;
-					console.log(`${status} ${transaction.idem}  ${ar.Content.checkout.id}`);
+					console.log(`${status} ${transaction.idem}  ${ar?.Content?.checkout?.id}`);
 					if (status) {
 						jQuery("#status").html(status);
 						if (status != "IN_PROGRESS" && status != "PENDING") {
@@ -101,9 +121,16 @@ class CardTerminal {
 								transaction.status = ar?.data?.object?.checkout?.cancel_reason || status;
 							}
 							analytics("transaction", transaction);
+						} else {
+							if (transaction.id == null) {
+								transaction.id = ar?.Content?.checkout?.id;
+								state.pending(transaction);
+							}
 						}
 					}
 					if (Date.now() - transaction.start > 300000) this.cancel(transaction);
+				} else {
+					throw(ar.Response + " " + ar?.Content);
 				}
 			})
 			.catch(e => {
@@ -273,7 +300,13 @@ class Buttons {
 
 		$("#services").click(() => services.hide());
 		$("#servicesButton").click(() => services.show());
-
+		/*
+		$("#servicesButton").on("touchend", () => services.show());
+		$("#button3p").on("touchend", () => cardTerminal.donate(300));
+		$("#button5p").on("touchend", () => cardTerminal.donate(500));
+		$("#button10p").on("touchend", () => cardTerminal.donate(1000));
+		$("#button30p").on("touchend", () => cardTerminal.donate(3000));
+		*/
 		if (location.search.indexOf('nocursor') >= 0) { state.touch(); }
 	}
 }
@@ -370,13 +403,13 @@ function analytics(message, transaction) {
 		transaction.age = (Date.now() - transaction.start) / 1000;
 		logMessage += " " + JSON.stringify(transaction);
 	}
-	if (logMessage != previousAnalyticsMessage || (Date.now() - lastTelemetry)/60000 > 60) {
+	if (logMessage != previousAnalyticsMessage || (Date.now() - lastTelemetry) / 60000 > 60) {
 		console.log(new Date().toISOString() + " " + logMessage);
 		previousAnalyticsMessage = logMessage;
 		lastTelemetry = Date.now();
-		let properties = {location:window?.configs?.location};
+		let properties = { location: window?.configs?.location };
 		if (transaction) properties.transaction = transaction;
-		appInsights.trackEvent({ name: locatedMessage, properties: properties});
+		appInsights.trackEvent({ name: locatedMessage, properties: properties });
 	}
 }
 
