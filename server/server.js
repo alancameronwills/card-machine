@@ -36,8 +36,8 @@ const contentTypes = {
 		"config": async () => {
 			let configs = ["churchName", "offline", "location"];
 			return {
-				body: JSON.stringify(configs.reduce((o, v) => {o[v] = credentials[v] || ""; return o;}, {})),
-				status: 200, 
+				body: JSON.stringify(configs.reduce((o, v) => { o[v] = credentials[v] || ""; return o; }, {})),
+				status: 200,
 				contentType: "application/json"
 			}
 		}
@@ -162,37 +162,43 @@ async function cardOperation(params, credentials) {
 		task["idempotency_key"] = params.idem;
 		http.body = JSON.stringify(task);
 	}
-
-	try {
-		verbose("Card operation: " + url);
-		verbose(util.inspect(http));
-		log(params.action || params.amount);
-		let reply = await fetch(url, http);
-		let contentType = reply.headers.get("content-type");
-		if (contentType.indexOf("json") > 0) {
-			let jsonData = await reply.json();
-			verbose("Reply Data: " + JSON.stringify(jsonData));
-			if (jsonData?.action?.status=="CANCELED") {
-				log(`Canceled: ${jsonData?.action.type} ${jsonData?.action?.cancel_reason}`);
+	let response = {};
+	let success = false;
+	for (let retryCount = 3; !success && retryCount > 0; retryCount--) {
+		try {
+			verbose("Card operation: " + url);
+			verbose(util.inspect(http));
+			log(params.action || params.amount);
+			let reply = await fetch(url, http);
+			let contentType = reply.headers.get("content-type");
+			if (contentType.indexOf("json") > 0) {
+				let jsonData = await reply.json();
+				verbose("Reply Data: " + JSON.stringify(jsonData));
+				if (jsonData?.action?.status == "CANCELED") {
+					log(`Canceled: ${jsonData?.action.type} ${jsonData?.action?.cancel_reason}`);
+				}
+				success = true;
+				response = {
+					body: JSON.stringify(
+						{ Content: jsonData, Response: reply.status }
+					), status: reply.status, contentType: contentType
+				};
+			} else {
+				log(`Card operation: ${url} \n ${util.inspect(http)}\nReply Content-Type: ${contentType}`);
+				let textData = await reply.text();
+				log("Text: " + textData);
+				success = true;
+				response = { body: textData, status: reply.status, contentType: "text/plain" };
 			}
-			return {
-				body: JSON.stringify(
-					{ Content: jsonData, Response: reply.status }
-				), status: reply.status, contentType: contentType
-			};
-		} else {
-			log(`Card operation: ${url} \n ${util.inspect(http)}\nReply Content-Type: ${contentType}`);
-			let textData = await reply.text();
-			log("Text: " + textData);
-			return { body: textData, status: reply.status, contentType: "text/plain" };
+		} catch (err) {
+			let errReport = util.inspect(err);
+			if (errReport.indexOf("fetch failed") >= 0) errReport = errReport.match(/cause:(.*)\n/)?.[1] || errReport;
+			log("   " + errReport);
+			verbose(`Card operation: ${url} \n ${util.inspect(http)}\nError: ${util.inspect(err)}`);
+			response = { body: JSON.stringify({ fetchFail: errReport }), status: 400, contentType: "application/json" };
 		}
-	} catch (err) {
-		let errReport = util.inspect(err);
-		if (errReport.indexOf("fetch failed") >= 0) errReport = errReport.match(/cause:(.*)\n/)?.[1] || errReport;
-		log("   " + errReport);
-		verbose(`Card operation: ${url} \n ${util.inspect(http)}\nError: ${util.inspect(err)}`);
-		return { body: JSON.stringify({fetchFail:errReport}), status: 400, contentType: "application/json" };
 	}
+	return response;
 }
 
 async function listSlides(params, credentials, clientRoot) {
@@ -202,9 +208,10 @@ async function listSlides(params, credentials, clientRoot) {
 		if (item.isDirectory && item.name.startsWith("slides")) {
 			if (item.name.indexOf("!") < 0 || !credentials?.location
 				|| item.name.indexOf(credentials.location) >= 0) {
-			slidesDir = item.name;
-			break;
-		}}
+				slidesDir = item.name;
+				break;
+			}
+		}
 	}
 	let dir = await fs.readdir(`${clientRoot}/img/${slidesDir}`);
 	let urlDir = dir.map(d => `/img/${slidesDir}/${d}`);
@@ -219,7 +226,7 @@ async function getCredentials(root, filter) {
 	let config = {};
 	let dir = await fs.readdir(root);
 	for (let item of dir) {
-		if (item.startsWith("cred-") && (!filter || item.indexOf(filter)>=0)) {
+		if (item.startsWith("cred-") && (!filter || item.indexOf(filter) >= 0)) {
 			config = JSON.parse(await fs.readFile(`${root}/${item}/card-machine.config`));
 		}
 	}
