@@ -44,7 +44,7 @@ async function go() {
 		log("no change", verbose);
 		setInterval(()=>process.exit(-1), 1000);
 	}
-	log(`Update from ${source} to ${root}`);
+	//log(`Update from ${source} to ${root}`);
 	let scan = async (manifest, action) => {
 		for (let line of manifest.split(/\r?\n/)) {
 			const name_timestamp = line.split(/[ \t#]+/, 2);
@@ -73,13 +73,13 @@ async function go() {
 				log(`Failed to copy ${name} ` + util.inspect(err));
 			}
 
-			log(name);
+			log(`  ${name}`);
 			count++;
 		}
 	});
 	await fs.mkdir(temp, { recursive: true });
 	await fs.writeFile(`${temp}/manifest.txt`, manifestRemote);
-	log(`Copied ${count} to ${temp}`);
+	if (count>0) log(`Copied ${count} to ${temp}`);
 	process.exitCode = count == 0 ? -1 : 0;
 }
 function log(msg, condition = true) {

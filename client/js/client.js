@@ -1,3 +1,5 @@
+let slideChangeInterval = 10000;
+
 let version = "" + Date.now();
 
 let state = {
@@ -238,7 +240,7 @@ class Slides {
 		clearInterval(this.imgCycle);
 		this.imgCycle = setInterval(() => {
 			this.nextSlide(1);
-		}, 30000);
+		}, slideChangeInterval);
 	}
 	nextSlide(inc = 1) {
 		document.getElementById(`s${this.imgIndex}`).style.opacity = 0;

@@ -2,6 +2,7 @@ const http = require('http');
 const util = require('util');
 const fs = require('fs/promises');
 const { argv } = require('process');
+const appInsights = require('applicationinsights');
 
 const logverbose = false;
 
@@ -34,9 +35,11 @@ const contentTypes = {
 		"calendar": calendar,
 		"ping": async () => { return { body: 'pong', status: 200, contentType: "text/plain" } },
 		"config": async () => {
-			let configs = ["churchName", "offline", "location"];
+			let configFilter = ["churchName", "offline", "location"];
+			let config = configFilter.reduce((o, v) => { o[v] = credentials[v] || ""; return o; }, {});
+			if (argv?.[4]) config.location += argv[4];
 			return {
-				body: JSON.stringify(configs.reduce((o, v) => { o[v] = credentials[v] || ""; return o; }, {})),
+				body: JSON.stringify(config),
 				status: 200,
 				contentType: "application/json"
 			}
@@ -100,7 +103,7 @@ const contentTypes = {
 	log(`Server running at http://localhost:${port}`);
 })()
 
-async function cardOperation(params, credentials) {
+function cardOperationRequest (params, credentials) {
 	let suffix = "", task = {};
 	switch (params.action) {
 		case "cancel":
@@ -162,13 +165,18 @@ async function cardOperation(params, credentials) {
 		task["idempotency_key"] = params.idem;
 		http.body = JSON.stringify(task);
 	}
+	return {url, http};
+}
+
+async function cardOperation(params, credentials) {
+	log(params.action || params.amount);
+	let {url, http} = cardOperationRequest(params,credentials);
+	verbose("Card operation: " + url);
+	verbose(util.inspect(http));
 	let response = {};
 	let success = false;
-	for (let retryCount = 3; !success && retryCount > 0; retryCount--) {
+	for (let retryCount = 0; !success && retryCount < 3; retryCount++) {
 		try {
-			verbose("Card operation: " + url);
-			verbose(util.inspect(http));
-			log(params.action || params.amount);
 			let reply = await fetch(url, http);
 			let contentType = reply.headers.get("content-type");
 			if (contentType.indexOf("json") > 0) {
@@ -193,7 +201,7 @@ async function cardOperation(params, credentials) {
 		} catch (err) {
 			let errReport = util.inspect(err);
 			if (errReport.indexOf("fetch failed") >= 0) errReport = errReport.match(/cause:(.*)\n/)?.[1] || errReport;
-			log("   " + errReport);
+			log(`  ${retryCount} ${errReport}`);
 			verbose(`Card operation: ${url} \n ${util.inspect(http)}\nError: ${util.inspect(err)}`);
 			response = { body: JSON.stringify({ fetchFail: errReport }), status: 400, contentType: "application/json" };
 		}
