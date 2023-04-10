@@ -302,6 +302,9 @@ class Buttons {
 
 		$("#services").click(() => services.hide());
 		$("#servicesButton").click(() => services.show());
+		$("#services").contextmenu(() => services.hide());
+		$("#servicesButton").contextmenu(() => services.show());
+		
 		/*
 		$("#servicesButton").on("touchend", () => services.show());
 		$("#button3p").on("touchend", () => cardTerminal.donate(300));
@@ -442,8 +445,9 @@ function waitNotNull(property, interval = 200, timeout = 2000) {
 
 async function SetPageHoles() {
 	let configs = await fetch("config").then(r => r.json());
-	$("#pleaseSupport").text(`Please support ${configs.churchName}`);
-	$("#offline").html(configs.offline);
+	if (configs.churchName) $("#pleaseSupport").text(`Please support ${configs.churchName}`);
+	if (configs.plea) $("#plea").text(configs.plea);
+	if (configs.offline) $("#offline").html(configs.offline);
 	return configs;
 }
 

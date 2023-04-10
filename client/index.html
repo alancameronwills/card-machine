@@ -40,18 +40,19 @@
 			<div class="chunk button-block" id="buttonGroup">
 				<div id="moneyButtons">
 					<h2 id="pleaseSupport">Please support this church</h2>
-					<h3>Touch briefly to donate by using your card or phone:</h3>
+					<span id="plea"></span>
+					<h3>Touch to donate by using your card or phone:</h3>
 					<div id="amountButtons" class="buttonSet">
-						<div id="button3p" class="whiteItem" onclick="cardTerminal.donate(300)">
+						<div id="button3p" class="whiteItem" onclick="cardTerminal.donate(300)" oncontextmenu="cardTerminal.donate(300)">
 							<span>£3</span>
 						</div></a>
-						<div id="button5p" class="whiteItem" onclick="cardTerminal.donate(500)">
+						<div id="button5p" class="whiteItem" onclick="cardTerminal.donate(500)" oncontextmenu="cardTerminal.donate(500)">
 							<span>£5</span>
 						</div>
-						<div id="button10p" class="whiteItem" onclick="cardTerminal.donate(1000)">
+						<div id="button10p" class="whiteItem" onclick="cardTerminal.donate(1000)" oncontextmenu="cardTerminal.donate(1000)">
 							£10
 						</div>
-						<div id="button30p" class="whiteItem" onclick="cardTerminal.donate(3000)">
+						<div id="button30p" class="whiteItem" onclick="cardTerminal.donate(3000)" oncontextmenu="cardTerminal.donate(3000)">
 							<span>£30</span>
 						</div>
 					</div>
@@ -63,7 +64,7 @@
 						<span class="arrow right"></span>
 					</div>
 					<div class="buttonSet">
-						<div class="whiteItem" onclick="cardTerminal.cancel()">
+						<div class="whiteItem" onclick="cardTerminal.cancel()" oncontextmenu="cardTerminal.cancel()">
 							<span>Cancel</span>
 						</div>
 					</div>
