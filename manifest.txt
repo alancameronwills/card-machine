@@ -1,7 +1,7 @@
 
 09/04/2023T12:15:36 .gitignore
 27/02/2023T01:34:02 client/code.html
-01/03/2023T01:57:32 client/css/client.css
+10/04/2023T23:31:29 client/css/client.css
 26/02/2023T21:51:42 client/img/!brynach-donate-qrcode.png
 26/02/2023T21:51:42 client/img/back.png
 26/02/2023T21:51:42 client/img/fwd.png
@@ -18,7 +18,7 @@
 26/02/2023T21:51:41 client/img/slides!brynach/s08.jpg
 26/02/2023T21:51:41 client/img/slides!brynach/s09.jpg
 26/02/2023T21:51:42 client/img/slides!brynach/s10.jpg
-30/03/2023T15:39:25 client/img/slides!brynach/s-i-1.jpg
+11/04/2023T00:00:47 client/img/slides!brynach/s-i-1.jpg
 10/04/2023T18:56:00 client/img/slides!thomas/s01.jpg
 10/04/2023T18:57:47 client/img/slides!thomas/s02.jpg
 10/04/2023T18:58:04 client/img/slides!thomas/s03.jpg
@@ -35,11 +35,11 @@
 10/04/2023T19:00:57 client/img/slides!thomas/s14.jpg
 10/04/2023T19:01:10 client/img/slides!thomas/s15.jpg
 26/02/2023T21:51:42 client/img/slides!thomas/s-i-1.jpg
-10/04/2023T20:54:09 client/index.html
-10/04/2023T20:58:37 client/js/client.js
+10/04/2023T23:47:16 client/index.html
+10/04/2023T23:42:23 client/js/client.js
 26/02/2023T21:51:42 client/js/jquery.min.js
 09/04/2023T12:17:25 go.cmd
-10/04/2023T21:32:29 manifest.txt
+11/04/2023T00:02:01 manifest.txt
 04/04/2023T00:43:08 READ_ME.txt
 05/03/2023T18:22:52 run.sh
 05/03/2023T19:55:13 server/restart-server.sh

@@ -1,4 +1,4 @@
-let slideChangeInterval = 10000;
+let slideChangeInterval = 15000;
 
 let version = "" + Date.now();
 
@@ -132,7 +132,7 @@ class CardTerminal {
 					}
 					if (Date.now() - transaction.start > 300000) this.cancel(transaction);
 				} else {
-					throw(ar.Response + " " + ar?.Content);
+					throw (ar.Response + " " + ar?.Content);
 				}
 			})
 			.catch(e => {
@@ -240,6 +240,7 @@ class Slides {
 		clearInterval(this.imgCycle);
 		this.imgCycle = setInterval(() => {
 			this.nextSlide(1);
+			buttons.showExtraButtons(1000);
 		}, slideChangeInterval);
 	}
 	nextSlide(inc = 1) {
@@ -248,13 +249,17 @@ class Slides {
 		document.getElementById(`s${this.imgIndex}`).style.opacity = 1;
 	}
 
-	pauseCycle(duration = 60000) {
+	pauseCycle(duration = 30000) {
 		clearInterval(this.imgCycle);
 		clearTimeout(this.pauseTimer);
-		$("#extraControls").addClass("paused");
-		this.pauseTimer = setTimeout(() => {
+		if ($("#extraControls").hasClass("paused")) {
 			this.cycleSlides();
-		}, duration);
+		} else {
+			$("#extraControls").addClass("paused");
+			this.pauseTimer = setTimeout(() => {
+				this.cycleSlides();
+			}, duration);
+		}
 	}
 
 	async getSlideSet() {
@@ -283,19 +288,19 @@ class Buttons {
 		this.buttonTimer = null;
 		this.setup();
 	}
-	showExtraButtons() {
+	showExtraButtons(period=3000) {
 		clearTimeout(this.buttonTimer);
-		document.getElementById("extraControls").style.opacity = 1;
+		$("#extraControls").addClass("show");
 		this.buttonTimer = setTimeout(() => {
-			document.getElementById("extraControls").style.opacity = 0;
-		}, 10000);
+			$("#extraControls").removeClass("show");
+		}, period);
 	}
 	setup() {
 		$("#bgImage").click(() => this.showExtraButtons());
 		$("#donation-block").click(() => this.showExtraButtons());
 		$("#extraControls").click(() => this.showExtraButtons());
-		$("#left").click(() => { slides.nextSlide(-1); slides.pauseCycle(1000); });
-		$("#right").click(() => { slides.nextSlide(1); slides.pauseCycle(1000); });
+		$("#left").click(() => { slides.nextSlide(-1); slides.pauseCycle(10000); });
+		$("#right").click(() => { slides.nextSlide(1); slides.pauseCycle(500); });
 		$("#pause").click(() => { slides.pauseCycle(60000); })
 
 		$("#amountButtons").on("click", event => { event.stopPropagation(); });
@@ -304,14 +309,7 @@ class Buttons {
 		$("#servicesButton").click(() => services.show());
 		$("#services").contextmenu(() => services.hide());
 		$("#servicesButton").contextmenu(() => services.show());
-		
-		/*
-		$("#servicesButton").on("touchend", () => services.show());
-		$("#button3p").on("touchend", () => cardTerminal.donate(300));
-		$("#button5p").on("touchend", () => cardTerminal.donate(500));
-		$("#button10p").on("touchend", () => cardTerminal.donate(1000));
-		$("#button30p").on("touchend", () => cardTerminal.donate(3000));
-		*/
+
 		if (location.search.indexOf('nocursor') >= 0) { state.touch(); }
 	}
 }
