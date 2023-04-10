@@ -34,54 +34,74 @@ async function go() {
 	} finally {
 	}
 	try {
-		manifestRemote = await fetch(`${source}/manifest.txt`).then(r => r.text());
+		let r = await fetchup(`${source}/manifest.txt`);
+		if (r.status != "200") throw r.status;
+		manifestRemote = await r.text();
 
 	} catch (err) {
 		log(`Can't get remote manifest ${source}/manifest.txt\n` + util.inspect(err));
 		throw err;
 	}
 	if (manifestLocal.trim() == manifestRemote.trim()) {
-		log("no change", verbose);
+		log("no change");
 		setInterval(()=>process.exit(-1), 1000);
 	}
 	//log(`Update from ${source} to ${root}`);
 	let scan = async (manifest, action) => {
 		for (let line of manifest.split(/\r?\n/)) {
 			const name_timestamp = line.split(/[ \t#]+/, 2);
-			log("Scan: " + line + util.inspect(name_timestamp), verbose);
 			const [name, timeStamp] = name_timestamp.length > 1 ? [name_timestamp[1].trim(), name_timestamp[0].trim()] : [name_timestamp[0].trim(), ""];
+			log(`Scan: timeStamp=${timeStamp} name=${name}` , verbose);
 			if (name && (name.indexOf('!')<0 || name.indexOf('!'+(credentials.location||""))>=0)) {
 				await action(name, timeStamp);
 			}
 		}
 	}
-
+	let temp = `${root}/temp`;
+	await fs.mkdir(temp, { recursive: true });
 	let fileMap = {};
 	await scan(manifestLocal, async (name, timeStamp) => {
 		fileMap[name] = timeStamp;
 	});
 	let count = 0;
-	let temp = `${root}/temp`;
 	await scan(manifestRemote, async (name, timeStamp) => {
 		if (!timeStamp || fileMap?.[name] != timeStamp) {
 			let target = `${temp}/${name}`;
 			try {
+				log (`cp ${source}/${name} ${target}`, verbose);
 				await fs.mkdir(directory(target), { recursive: true });
-				const { body } = await fetch(`${source}/${name}`);
+				const { body, status } = await fetchup(`${source}/${name}`);
+				if (status != "200") throw status;
 				await fs.writeFile(target, body);
+				
 			} catch (err) {
 				log(`Failed to copy ${name} ` + util.inspect(err));
 			}
-
 			log(`  ${name}`);
 			count++;
 		}
 	});
-	await fs.mkdir(temp, { recursive: true });
 	await fs.writeFile(`${temp}/manifest.txt`, manifestRemote);
 	if (count>0) log(`Copied ${count} to ${temp}`);
 	process.exitCode = count == 0 ? -1 : 0;
 }
+
+async function fetchup (url) {
+	let result = null, error = null;
+	let success = false;
+	for (let retry = 0; !success && retry < 3; retry++) {
+		try {
+			log ("fetchup " + url, verbose);
+			result = await fetch(url);
+			success = true;
+		} catch (err) {
+			error = err;
+		}
+	}
+	if (result == null) throw error;
+	return result;
+}
+
 function log(msg, condition = true) {
 	if (condition && previousMsg != msg) {
 		previousMsg = msg;

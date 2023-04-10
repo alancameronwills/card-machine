@@ -4,3 +4,4 @@
 /server/package*
 /server/package.json
 jquery*
+go.cmd
