@@ -35,7 +35,7 @@ const contentTypes = {
 		"calendar": calendar,
 		"ping": async () => { return { body: 'pong', status: 200, contentType: "text/plain" } },
 		"config": async () => {
-			let configFilter = ["churchName", "offline", "location"];
+			let configFilter = ["churchName", "offline", "location", "buttonPosition", "plea"];
 			let config = configFilter.reduce((o, v) => { o[v] = credentials[v] || ""; return o; }, {});
 			if (argv?.[4]) config.location += argv[4];
 			return {

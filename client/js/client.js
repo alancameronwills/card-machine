@@ -288,7 +288,7 @@ class Buttons {
 		this.buttonTimer = null;
 		this.setup();
 	}
-	showExtraButtons(period=3000) {
+	showExtraButtons(period = 3000) {
 		clearTimeout(this.buttonTimer);
 		$("#extraControls").addClass("show");
 		this.buttonTimer = setTimeout(() => {
@@ -346,26 +346,25 @@ class Calendar {
 
 	calendarLoad(location, rows = 4) {
 		let serviceWords = ["communion", "prayer", "service", "vigil", "mass"];
-		try {
-			fetch('/calendar')
-				.then(r => r.json())
-				.then(r => {
-					let table = ["<table class='calendar'><tr><td>"];
-					let rowCount = 0;
-					r.items.forEach(item => {
-						let when = new Date(item.start.dateTime);
-						let summaryLC = item.summary.toLowerCase();
-						if (serviceWords.some(s => summaryLC.indexOf(s) >= 0)) {
-							let whenDate = new Date(when);
-							if (rowCount++ < rows) {
-								table.push(`${item.summary} </td><td> ${whenDate.getHours()}:${whenDate.getMinutes()} ${whenDate.toDateString()}</td></tr><tr><td>`);
-							}
+		fetch('/calendar')
+			.then(r => r.json())
+			.then(r => {
+				let table = ["<table class='calendar'><tr><td>"];
+				let rowCount = 0;
+				r.items.forEach(item => {
+					let when = new Date(item.start.dateTime);
+					let summaryLC = item.summary.toLowerCase();
+					if (serviceWords.some(s => summaryLC.indexOf(s) >= 0)) {
+						let whenDate = new Date(when);
+						if (rowCount++ < rows) {
+							table.push(`${item.summary} </td><td> ${whenDate.getHours()}:${whenDate.getMinutes()} ${whenDate.toDateString()}</td></tr><tr><td>`);
 						}
-					});
-					table.push("</td></tr></table>");
-					document.getElementById(location).innerHTML = table.join("");
+					}
 				});
-		} catch (e) { }
+				table.push("</td></tr></table>");
+				document.getElementById(location).innerHTML = table.join("");
+			})
+			.catch(r => { });
 	}
 
 }
@@ -444,8 +443,9 @@ function waitNotNull(property, interval = 200, timeout = 2000) {
 async function SetPageHoles() {
 	let configs = await fetch("config").then(r => r.json());
 	if (configs.churchName) $("#pleaseSupport").text(`Please support ${configs.churchName}`);
-	if (configs.plea) $("#plea").text(configs.plea);
+	if (configs.plea) $("#plea").html(`<span>${configs.plea}</span>`);
 	if (configs.offline) $("#offline").html(configs.offline);
+	if (configs.buttonPosition) $("#extraControls").css(configs.buttonPosition);
 	return configs;
 }
 

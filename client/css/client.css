@@ -109,6 +109,13 @@ h3 {
 	margin-block-start: 0;
 }
 
+#pleaseSupport {
+	margin-block-end: 0;
+}
+#plea {
+	font-size: 1.2vw;
+}
+
 .buttonSet {
 	display: flex;
 	justify-content: right;
@@ -244,16 +251,26 @@ article:not(.pending) #status {
 	background-color: rgba(255, 255, 255, 0.6);
 	padding: 10px 4px;
 	border-radius: 10px;
+	transform-origin: bottom;
 	transition: all 2s;
+	--stroke-color: black;
+	--background: rgba(255, 255, 255, 0);
 }
 
-#extraControls button {
+#extraControls>div {
 	width: 50px;
-	height: 52px;
-	background-color: rgba(255, 255, 255, 0.6);
-	border: 0;
+	height: 100px;
 }
 
+#extraControls svg {
+	display: block;
+	stroke:var(--stroke-color);
+}
+
+#extraControls svg>polygon {
+	stroke-width: 3;
+	fill:transparent;
+}
 
 #extraControls.paused #pause>svg>polygon {
 	fill:rgba(255,255,255,0.5);
@@ -264,7 +281,7 @@ article:not(.pending) #status {
 }
 
 #extraControls:not(.show) {
-	background-color: rgba(255, 255, 255, 0);
+	background-color: var(--background);
 }
 
 .bottomRight {
