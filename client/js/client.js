@@ -58,35 +58,6 @@ class CardTerminal {
 		this.slowPingFactor = successPingSlowFactor;
 		this.pingCheck();
 	}
-	/*
-	donate(amount) {
-		state.waiting();
-		const idem = Date.now();
-		fetch(`/card-operation.php?amount=${amount}&idem=${idem}`)
-			.then(r => r.json())
-			.then(r => {
-				if (r.Response == "200") {
-					console.log("donate");
-					let transaction = {
-						idem: idem,
-						id: r.Content.checkout.id,
-						start: Date.now(),
-						amount: amount
-					};
-					state.pending(transaction);
-					let timer = setInterval(() => {
-						if (state.isPending()) {
-							this.checkoutStatus(transaction);
-						}
-						else {
-							clearInterval(timer);
-						}
-					}, 1000);
-				}
-			})
-			.catch(e => console.log("Donate fetch: " + e.message));
-	}
-	*/
 	donate(amount) {
 		let transaction = {
 			idem: Date.now(),
@@ -302,16 +273,16 @@ class Buttons {
 		$("#left").click(() => { slides.nextSlide(-1); slides.pauseCycle(10000); });
 		$("#right").click(() => { slides.nextSlide(1); slides.pauseCycle(500); });
 		$("#pause").click(() => { slides.pauseCycle(60000); })
-		$("#left").contextmenu(() => { slides.nextSlide(-1); slides.pauseCycle(10000); });
-		$("#right").contextmenu(() => { slides.nextSlide(1); slides.pauseCycle(500); });
-		$("#pause").contextmenu(() => { slides.pauseCycle(60000); })
+		$("#left").contextmenu(event => {event.preventDefault(); slides.nextSlide(-1); slides.pauseCycle(10000); });
+		$("#right").contextmenu(event => {event.preventDefault(); slides.nextSlide(1); slides.pauseCycle(500); });
+		$("#pause").contextmenu(event => {event.preventDefault(); slides.pauseCycle(60000); })
 
 		$("#amountButtons").on("click", event => { event.stopPropagation(); });
 
 		$("#services").click(() => services.hide());
 		$("#servicesButton").click(() => services.show());
-		$("#services").contextmenu(() => services.hide());
-		$("#servicesButton").contextmenu(() => services.show());
+		$("#services").contextmenu(event => {event.preventDefault(); services.hide()});
+		$("#servicesButton").contextmenu(event => {event.preventDefault(); services.show()});
 
 		if (location.search.indexOf('nocursor') >= 0) { state.touch(); }
 	}
