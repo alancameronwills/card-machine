@@ -302,6 +302,9 @@ class Buttons {
 		$("#left").click(() => { slides.nextSlide(-1); slides.pauseCycle(10000); });
 		$("#right").click(() => { slides.nextSlide(1); slides.pauseCycle(500); });
 		$("#pause").click(() => { slides.pauseCycle(60000); })
+		$("#left").contextmenu(() => { slides.nextSlide(-1); slides.pauseCycle(10000); });
+		$("#right").contextmenu(() => { slides.nextSlide(1); slides.pauseCycle(500); });
+		$("#pause").contextmenu(() => { slides.pauseCycle(60000); })
 
 		$("#amountButtons").on("click", event => { event.stopPropagation(); });
 
