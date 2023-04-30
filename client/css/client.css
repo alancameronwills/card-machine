@@ -92,6 +92,7 @@ article.touch .chunk {
 	background-color: rgba(0, 0, 0, 0.4);
 	padding: 1vw 3vw 1vw 3vw;
 	border-radius: 1vw;
+	border: 1px blue solid;
 }
 
 h1 {
@@ -253,7 +254,7 @@ article:not(.pending) #status {
 	border-radius: 10px;
 	transform-origin: bottom;
 	transition: all 2s;
-	--stroke-color: black;
+	--stroke-color: rgba(0,0,0,0.8);
 	--background: rgba(255, 255, 255, 0);
 }
 

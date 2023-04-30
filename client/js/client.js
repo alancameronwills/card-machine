@@ -1,4 +1,20 @@
-let slideChangeInterval = 15000;
+/* Timings in seconds */
+
+let slideChangeInterval = 15; 
+let successShowTime = 4;  // "Thank you" message
+let transactionProgressPollInterval = 1; // Ping during transaction
+let transactionTimeout = 300; // Cancel transaction if visitor walks away
+let transactionComFailTimeout = 10; // How long to keep trying if ping fails during a transaction
+let idlePingInterval = 120; // Check whether card terminal is alive at this interval
+let recentActivityPingInterval = 20; // Check card terminal more often if recently failed or transaction
+let pauseSlidePeriod = 60; // Pause if visitor clicks slide pause button
+let leftSlidePause = 10;  // Extra pause if visitor clicks slide left button
+let telemetryIdleMinutes = 60; // Report at least once every _ minutes
+let calendarRefreshInterval = 3600; // Get Google calendar
+let servicesShowPeriod = 60; // How long to show the Services page
+
+
+/* ****************************************** */
 
 let version = "" + Date.now();
 
@@ -51,11 +67,11 @@ class CardTerminal {
 	/**
 	 * 
 	 * @param {*} pingSeconds Seconds between pings
-	 * @param {*} successPingSlowFactor Wait this multiple on successful ping
+	 * @param {*} idlePingInterval Seconds between pings on successful ping
 	 */
-	constructor(pingSeconds = 10, successPingSlowFactor = 3) {
+	constructor(pingSeconds = 10, idlePingInterval = 30) {
 		this.pingInterval = pingSeconds;
-		this.slowPingFactor = successPingSlowFactor;
+		this.slowPingFactor = idlePingInterval / pingSeconds;
 		this.pingCheck();
 	}
 	donate(amount) {
@@ -74,7 +90,7 @@ class CardTerminal {
 			else {
 				clearInterval(timer);
 			}
-		}, 1000);
+		}, transactionProgressPollInterval * 1000);
 	}
 	checkoutStatus(transaction) {
 		fetch(`/card-operation.php?amount=${transaction.amount}&idem=${transaction.idem}&nocache=${Date.now()}`)
@@ -90,7 +106,7 @@ class CardTerminal {
 								this.success();
 								transaction.status = status;
 							} else {
-								this.cancel(null);
+								this.cancel(null, "weirdState");
 								transaction.status = ar?.data?.object?.checkout?.cancel_reason || status;
 							}
 							analytics("transaction", transaction);
@@ -101,30 +117,35 @@ class CardTerminal {
 							}
 						}
 					}
-					if (Date.now() - transaction.start > 300000) this.cancel(transaction);
+					if (Date.now() - transaction.start > transactionTimeout * 1000) this.cancel(transaction);
 				} else {
 					throw (ar.Response + " " + ar?.Content);
 				}
 			})
 			.catch(e => {
 				console.log("Status fetch: " + e.message);
-				if (Date.now() - transaction.start > 10000) this.cancel(transaction);
+				if (Date.now() - transaction.start > transactionComFailTimeout * 1000) this.cancel(transaction, "comfail");
 				analytics("Status fetch: " + e.message, transaction)
 			});
 	}
 
 	success() {
 		state.success();
-		setTimeout(() => this.cancel(null), 4000);
+		setTimeout(() => this.cancel(null), successShowTime*1000);
 	}
 
-	cancel(transaction = state.transaction) {
+	cancel(transaction = state.transaction, failed=false) {
 		if (transaction) {
 			fetch("/card-operation.php?action=cancel&idem=" + transaction.id)
 				.catch(e => console.log("Cancel: " + e.message));
 			analytics("Cancel", transaction);
 		}
-		state.ready();
+		if (failed) {
+			state.disconnected();
+		}
+		else {
+			state.ready();
+		}
 	}
 
 	pingCheck() {
@@ -212,7 +233,7 @@ class Slides {
 		this.imgCycle = setInterval(() => {
 			this.nextSlide(1);
 			buttons.showExtraButtons(1000);
-		}, slideChangeInterval);
+		}, slideChangeInterval*1000);
 	}
 	nextSlide(inc = 1) {
 		document.getElementById(`s${this.imgIndex}`).style.opacity = 0;
@@ -270,12 +291,12 @@ class Buttons {
 		$("#bgImage").click(() => this.showExtraButtons());
 		$("#donation-block").click(() => this.showExtraButtons());
 		$("#extraControls").click(() => this.showExtraButtons());
-		$("#left").click(() => { slides.nextSlide(-1); slides.pauseCycle(10000); });
+		$("#left").click(() => { slides.nextSlide(-1); slides.pauseCycle(leftSlidePause * 1000); });
 		$("#right").click(() => { slides.nextSlide(1); slides.pauseCycle(500); });
-		$("#pause").click(() => { slides.pauseCycle(60000); })
-		$("#left").contextmenu(event => {event.preventDefault(); slides.nextSlide(-1); slides.pauseCycle(10000); });
+		$("#pause").click(() => { slides.pauseCycle(pauseSlidePeriod * 1000); })
+		$("#left").contextmenu(event => {event.preventDefault(); slides.nextSlide(-1); slides.pauseCycle(leftSlidePause * 1000); });
 		$("#right").contextmenu(event => {event.preventDefault(); slides.nextSlide(1); slides.pauseCycle(500); });
-		$("#pause").contextmenu(event => {event.preventDefault(); slides.pauseCycle(60000); })
+		$("#pause").contextmenu(event => {event.preventDefault(); slides.pauseCycle(pauseSlidePeriod * 1000); })
 
 		$("#amountButtons").on("click", event => { event.stopPropagation(); });
 
@@ -297,7 +318,7 @@ class Services {
 		$("#services").show(500);
 		window.calendar.calendarLoad("servicesCalendar", 4);
 		clearTimeout(this.timer);
-		this.timer = setTimeout(() => this.hide(), 60000);
+		this.timer = setTimeout(() => this.hide(), servicesShowPeriod * 1000);
 		this.hideDebounceTimer = setTimeout(() => {
 			clearTimeout(this.hideDebounceTimer);
 			this.hideDebounceTimer = null;
@@ -315,7 +336,7 @@ class Services {
 
 class Calendar {
 	constructor() {
-		nowAndEvery(60 * 60 * 1000, () => this.calendarLoad("calendarExtract", 2));
+		nowAndEvery(calendarRefreshInterval * 1000, () => this.calendarLoad("calendarExtract", 2));
 	}
 
 	calendarLoad(location, rows = 4) {
@@ -379,7 +400,7 @@ function analytics(message, transaction) {
 		transaction.age = (Date.now() - transaction.start) / 1000;
 		logMessage += " " + JSON.stringify(transaction);
 	}
-	if (logMessage != previousAnalyticsMessage || (Date.now() - lastTelemetry) / 60000 > 60) {
+	if (logMessage != previousAnalyticsMessage || (Date.now() - lastTelemetry) / 60000 > telemetryIdleMinutes) {
 		console.log(new Date().toISOString() + " " + logMessage);
 		previousAnalyticsMessage = logMessage;
 		lastTelemetry = Date.now();
@@ -427,7 +448,7 @@ $(async () => {
 	window.buttons = new Buttons();
 	window.slides = new Slides();
 	window.services = new Services();
-	window.cardTerminal = new CardTerminal(10, 3);
+	window.cardTerminal = new CardTerminal(recentActivityPingInterval, idlePingInterval);
 	window.calendar = new Calendar();
 	window.romanClock = new RomanClock();
 	window.configs = await SetPageHoles();
