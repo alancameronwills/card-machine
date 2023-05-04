@@ -169,44 +169,52 @@ function cardOperationRequest (params, credentials) {
 }
 
 async function cardOperation(params, credentials) {
-	log(params.action || params.amount);
 	let {url, http} = cardOperationRequest(params,credentials);
 	verbose("Card operation: " + url);
 	verbose(util.inspect(http));
 	let response = {};
-	let success = false;
-	for (let retryCount = 0; !success && retryCount < 3; retryCount++) {
+	let gotResponse = false;
+	for (let retryCount = 0; !gotResponse && retryCount < 3; retryCount++) {
 		try {
+			if (retryCount>0) {
+				sleepForSeconds(3);
+			}
 			let reply = await fetch(url, http);
 			let contentType = reply.headers.get("content-type");
 			if (contentType.indexOf("json") > 0) {
 				let jsonData = await reply.json();
 				verbose("Reply Data: " + JSON.stringify(jsonData));
 				if (jsonData?.action?.status == "CANCELED") {
-					log(`Canceled: ${jsonData?.action.type} ${jsonData?.action?.cancel_reason}`);
+					log(`${params.action || params.amount} Canceled: ${jsonData?.action.type} ${jsonData?.action?.cancel_reason}`);
+				} else {
+					log(`${params.action || params.amount} ${retryCount}`);
 				}
-				success = true;
+				gotResponse = true;
 				response = {
 					body: JSON.stringify(
 						{ Content: jsonData, Response: reply.status }
 					), status: reply.status, contentType: contentType
 				};
 			} else {
-				log(`Card operation: ${url} \n ${util.inspect(http)}\nReply Content-Type: ${contentType}`);
+				log(`${params.action || params.amount} Card operation: ${url} \n ${util.inspect(http)}\nReply Content-Type: ${contentType}`);
 				let textData = await reply.text();
 				log("Text: " + textData);
-				success = true;
+				gotResponse = true;
 				response = { body: textData, status: reply.status, contentType: "text/plain" };
 			}
 		} catch (err) {
 			let errReport = util.inspect(err);
 			if (errReport.indexOf("fetch failed") >= 0) errReport = errReport.match(/cause:(.*)\n/)?.[1] || errReport;
-			log(`  ${retryCount} ${errReport}`);
-			verbose(`Card operation: ${url} \n ${util.inspect(http)}\nError: ${util.inspect(err)}`);
+			log(`${params.action || params.amount} ${errReport}`);
+			verbose(`${params.action || params.amount} Card operation: ${url} \n ${util.inspect(http)}\nError: ${util.inspect(err)}`);
 			response = { body: JSON.stringify({ fetchFail: errReport }), status: 400, contentType: "application/json" };
 		}
 	}
 	return response;
+}
+
+async function sleepForSeconds(seconds) {
+	return new Promise((resolve) =>setTimeout(resolve, seconds * 1000));
 }
 
 async function listSlides(params, credentials, clientRoot) {
@@ -300,10 +308,17 @@ function verbose(msg) {
 	if (logverbose) log(msg);
 }
 let previousMsg = "";
+let messageRepeatCount = 0;
 function log(msg, condition = true) {
 	if (condition && previousMsg != msg) {
+		if (messageRepeatCount>0) {
+			console.log(` * ${messageRepeatCount}`);
+			messageRepeatCount = 0;
+		}
 		previousMsg = msg;
 		console.log(`${new Date().toISOString()} ${msg}`);
+	} else {
+		messageRepeatCount++;
 	}
 }
 
