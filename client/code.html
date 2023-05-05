@@ -14,7 +14,7 @@
 
 		function go() {
 
-			fetch ("/card-operation.php?action=login")
+			fetch (`/card-operation.php?action=login&idem=${Date.now()}`)
 
 			.then (r=> r.json())
 

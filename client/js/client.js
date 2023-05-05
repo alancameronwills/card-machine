@@ -106,7 +106,7 @@ class CardTerminal {
 								this.success();
 								transaction.status = status;
 							} else {
-								this.cancel(null, "weirdState");
+								this.cancel(null); // Cancelled from terminal
 								transaction.status = ar?.data?.object?.checkout?.cancel_reason || status;
 							}
 							analytics("transaction", transaction);
