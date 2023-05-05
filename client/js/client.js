@@ -105,11 +105,11 @@ class CardTerminal {
 							if (status == "COMPLETED") {
 								this.success();
 								transaction.status = status;
+								analytics("transaction", transaction);
 							} else {
 								this.cancel(null); // Cancelled from terminal
 								transaction.status = ar?.data?.object?.checkout?.cancel_reason || status;
 							}
-							analytics("transaction", transaction);
 						} else {
 							if (transaction.id == null) {
 								transaction.id = ar?.Content?.checkout?.id;
