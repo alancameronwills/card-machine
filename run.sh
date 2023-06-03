@@ -1,4 +1,5 @@
 #!/bin/bash
+sleep 1m
 cd `dirname $BASH_SOURCE`
 while true
 do

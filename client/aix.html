@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<style>
+		.dateAmount tr td:nth-child(2) {text-align: right; min-width:60px;}
+		.dateAmount tr:nth-child(odd) {background-color: antiquewhite;}
+	</style>
+</head>
+
+<body>
+	<pre id="query" contenteditable="true" style="min-height:30px;min-width: 300px;"></pre>
+	<button onclick="doIt()">Go</button>
+	<hr/>
+	<div id="result"></div>
+	
+	<script>
+		const q_daily_collection = `customEvents
+| project timestamp, name, customDimensions
+| where timestamp > ago(7d)
+| where name contains "transaction"
+| extend a = parse_json(iff(isnotnull(customDimensions.transaction), customDimensions.transaction, '')).amount
+| extend amount = iff(isnull(a), 0, (a / 100))
+| summarize sum = sum(amount) by bin(timestamp, 1d), location = tostring(customDimensions.location)
+| order by timestamp desc, location
+| project day = format_datetime(timestamp, "yyyy-MM-dd"), sum, location
+`;
+		document.getElementById("query").innerHTML = q_daily_collection;
+
+		async function doIt() {
+			let q = document.getElementById("query").innerText;
+			let r =	await fetch(`/analytics/?query=${encodeURIComponent(q)}`).then(r => r.json());
+			let result = document.getElementById("result");
+			result.innerHTML = "";
+			let ts = "<table class='dateAmount'>";
+			let rows = r.tables[0].rows;
+			for (let i = 0; i<rows.length; i++) {
+				ts += `<tr><td>${rows[i][0]}</td><td>£ ${rows[i][1]}</td></tr>`;
+			}
+			ts += "</table>";
+
+			result.innerHTML = ts;
+		}
+	</script>
+</body>
+
+</html>

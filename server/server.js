@@ -33,6 +33,7 @@ const contentTypes = {
 		"card-operation": cardOperation,
 		"list-slides": listSlides,
 		"calendar": calendar,
+		"analytics" : appInsightsQuery,
 		"ping": async () => { return { body: 'pong', status: 200, contentType: "text/plain" } },
 		"config": async () => {
 			let configFilter = ["churchName", "offline", "location", "buttonPosition", "plea"];
@@ -174,6 +175,7 @@ async function cardOperation(params, credentials) {
 	verbose(util.inspect(http));
 	let response = {};
 	let gotResponse = false;
+	let retryLog = "";
 	for (let retryCount = 0; !gotResponse && retryCount < 3; retryCount++) {
 		try {
 			if (retryCount>0) {
@@ -185,9 +187,9 @@ async function cardOperation(params, credentials) {
 				let jsonData = await reply.json();
 				verbose("Reply Data: " + JSON.stringify(jsonData));
 				if (jsonData?.action?.status == "CANCELED") {
-					log(`${params.action || params.amount} Canceled: ${jsonData?.action.type} ${jsonData?.action?.cancel_reason}`);
+					retryLog += (`${params.action || params.amount} Canceled: ${jsonData?.action.type} ${jsonData?.action?.cancel_reason}`);
 				} else {
-					log(`${params.action || params.amount} ${retryCount}`);
+					retryLog += (`${params.action || params.amount} ${retryCount}`);
 				}
 				gotResponse = true;
 				response = {
@@ -196,20 +198,21 @@ async function cardOperation(params, credentials) {
 					), status: reply.status, contentType: contentType
 				};
 			} else {
-				log(`${params.action || params.amount} Card operation: ${url} \n ${util.inspect(http)}\nReply Content-Type: ${contentType}`);
+				retryLog += (`${params.action || params.amount} Card operation: ${url} \n ${util.inspect(http)}\nReply Content-Type: ${contentType}`);
 				let textData = await reply.text();
-				log("Text: " + textData);
+				retryLog += ("\n   Text: " + textData);
 				gotResponse = true;
 				response = { body: textData, status: reply.status, contentType: "text/plain" };
 			}
 		} catch (err) {
 			let errReport = util.inspect(err);
 			if (errReport.indexOf("fetch failed") >= 0) errReport = errReport.match(/cause:(.*)\n/)?.[1] || errReport;
-			log(`${params.action || params.amount} ${errReport}`);
+			retryLog += `    ${params.action || params.amount} ${errReport} \n`;
 			verbose(`${params.action || params.amount} Card operation: ${url} \n ${util.inspect(http)}\nError: ${util.inspect(err)}`);
 			response = { body: JSON.stringify({ fetchFail: errReport }), status: 400, contentType: "application/json" };
 		}
 	}
+	log(retryLog);
 	return response;
 }
 
@@ -254,7 +257,7 @@ async function getUrl(params) {
 	let url = "https://" + params["u"];
 	verbose("Get url: " + url);
 	try {
-		let response = await fetch(url);
+		let response = await fetch(url, params["o"]);
 		replyType = response.headers.get("content-type");
 		verbose(response.status);
 		verbose(util.inspect(response.headers));
@@ -280,6 +283,28 @@ async function calendar(params, credentials) {
 		+ `/events?timeMin=${today.toISOString()}&timeMax=${todayMonth.toISOString()}`
 		+ `&singleEvents=true&orderBy=startTime&key=${credentials.googleApiKey}`;
 	return await getUrl({ u: url });
+}
+
+async function appInsightsQuery(params, credentials) {
+	let appId = credentials.appInsightsId;
+	let apiKey = credentials.appInsightsApiKey;
+	let url = `api.applicationinsights.io/v1/apps/${appId}/query`;
+	let query = decodeURIComponent(params.query).replace(/[\n\r\t]/g, " ").replace(/"/g, "'"); 
+	log (query);
+	if (!(appId && apiKey))
+		return {status:400, contentType: "text/plain", body:"no Application Insights credentials"};
+		const options = {
+			method: 'POST',
+			headers: {
+				'Content-type': 'application/json;charset=utf-8',
+				'Accept': 'application/json',
+				'Accept-Charset': 'utf-8',
+				'X-Api-Key': apiKey,
+				"Accept-Encoding": "identity"
+			},
+			body: `{"query": "${query}"}` 
+		};
+		return await getUrl({u:url, o:options}); 
 }
 
 function parseReq(request, defaultPage = "/index.html") {
