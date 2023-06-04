@@ -275,7 +275,7 @@ async function getUrl(params) {
 }
 
 async function calendar(params, credentials) {
-	if (!credentials.googleCalendar) return { status: 400, contentType: "text/plain", body: "no calendar credentials" };
+	if (!credentials.googleCalendar) return { status: 444, contentType: "text/plain", body: "no calendar credentials" };
 	let today = new Date();
 	let todayMonth = new Date();
 	todayMonth.setMonth(todayMonth.getMonth() + 1);

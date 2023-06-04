@@ -1,6 +1,6 @@
 /* Timings in seconds */
 
-let slideChangeInterval = 15; 
+let slideChangeInterval = 15;
 let successShowTime = 4;  // "Thank you" message
 let transactionProgressPollInterval = 1; // Ping during transaction
 let transactionTimeout = 300; // Cancel transaction if visitor walks away
@@ -131,10 +131,10 @@ class CardTerminal {
 
 	success() {
 		state.success();
-		setTimeout(() => this.cancel(null), successShowTime*1000);
+		setTimeout(() => this.cancel(null), successShowTime * 1000);
 	}
 
-	cancel(transaction = state.transaction, failed=false) {
+	cancel(transaction = state.transaction, failed = false) {
 		if (transaction) {
 			fetch("/card-operation.php?action=cancel&idem=" + transaction.id)
 				.catch(e => console.log("Cancel: " + e.message));
@@ -233,7 +233,7 @@ class Slides {
 		this.imgCycle = setInterval(() => {
 			this.nextSlide(1);
 			buttons.showExtraButtons(1000);
-		}, slideChangeInterval*1000);
+		}, slideChangeInterval * 1000);
 	}
 	nextSlide(inc = 1) {
 		document.getElementById(`s${this.imgIndex}`).style.opacity = 0;
@@ -294,16 +294,16 @@ class Buttons {
 		$("#left").click(() => { slides.nextSlide(-1); slides.pauseCycle(leftSlidePause * 1000); });
 		$("#right").click(() => { slides.nextSlide(1); slides.pauseCycle(500); });
 		$("#pause").click(() => { slides.pauseCycle(pauseSlidePeriod * 1000); })
-		$("#left").contextmenu(event => {event.preventDefault(); slides.nextSlide(-1); slides.pauseCycle(leftSlidePause * 1000); });
-		$("#right").contextmenu(event => {event.preventDefault(); slides.nextSlide(1); slides.pauseCycle(500); });
-		$("#pause").contextmenu(event => {event.preventDefault(); slides.pauseCycle(pauseSlidePeriod * 1000); })
+		$("#left").contextmenu(event => { event.preventDefault(); slides.nextSlide(-1); slides.pauseCycle(leftSlidePause * 1000); });
+		$("#right").contextmenu(event => { event.preventDefault(); slides.nextSlide(1); slides.pauseCycle(500); });
+		$("#pause").contextmenu(event => { event.preventDefault(); slides.pauseCycle(pauseSlidePeriod * 1000); })
 
 		$("#amountButtons").on("click", event => { event.stopPropagation(); });
 
 		$("#services").click(() => services.hide());
 		$("#servicesButton").click(() => services.show());
-		$("#services").contextmenu(event => {event.preventDefault(); services.hide()});
-		$("#servicesButton").contextmenu(event => {event.preventDefault(); services.show()});
+		$("#services").contextmenu(event => { event.preventDefault(); services.hide() });
+		$("#servicesButton").contextmenu(event => { event.preventDefault(); services.show() });
 
 		if (location.search.indexOf('nocursor') >= 0) { state.touch(); }
 	}
@@ -336,13 +336,20 @@ class Services {
 
 class Calendar {
 	constructor() {
-		nowAndEvery(calendarRefreshInterval * 1000, () => this.calendarLoad("calendarExtract", 2));
+		this.stopped = false;
+		this.timer = nowAndEvery(calendarRefreshInterval * 1000, () => this.calendarLoad("calendarExtract", 2));
 	}
 
 	calendarLoad(location, rows = 4) {
+		if (this.stopped) return;
 		let serviceWords = ["communion", "prayer", "service", "vigil", "mass"];
 		fetch('/calendar')
-			.then(r => r.json())
+			.then(r => {
+				if (r.status == 444) {
+					throw "stopCalendar";
+				}
+				return r.json();
+			})
 			.then(r => {
 				let table = ["<table class='calendar'><tr><td>"];
 				let rowCount = 0;
@@ -359,7 +366,12 @@ class Calendar {
 				table.push("</td></tr></table>");
 				document.getElementById(location).innerHTML = table.join("");
 			})
-			.catch(r => { });
+			.catch(e => {
+				if (e == "stopCalendar") {
+					this.stopped = true;
+					clearInterval(this.timer);
+				}
+			});
 	}
 
 }

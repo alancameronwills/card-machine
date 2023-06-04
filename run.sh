@@ -1,6 +1,11 @@
 #!/bin/bash
-sleep 1m
 cd `dirname $BASH_SOURCE`
+(	# Archive logs
+	mkdir -p logs
+ 	mv -f log-server.log logs/log-server-`date +%d`.log 
+ 	case `date +%d` in (01) mv -f log-update.log logs/log-update-`date +%m`.log ; esac 
+) &
+sleep 1m # Allow WiFi router to start
 while true
 do
 	sleep 10m
