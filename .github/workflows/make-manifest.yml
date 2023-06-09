@@ -9,5 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run:  find . -path "./server/node_modules" -prune -o -path "./manifest.txt" -prune -o -path "./.git*" -prune -o -type f -print | xargs ls -l --time-style=+%d/%m%YT%H:%M:%S | awk '{print $6 " " $7}'
+      - run:  |
+          find . -path "./manifest.txt" -prune -o -path "./.git*" -prune -o -type f -print | 
+          xargs ls -l --time-style=+%d/%m%YT%H:%M:%S |
+          awk '{print $6 " " sub("\.\/", "", $7)}'
       - run: ls -lR
