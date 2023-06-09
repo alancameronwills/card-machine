@@ -12,5 +12,5 @@ jobs:
       - run:  |
           find . -path "./manifest.txt" -prune -o -path "./.git*" -prune -o -type f -print | 
           xargs ls -l --time-style=+%d/%m%YT%H:%M:%S |
-          awk '{print $6 " " sub("\.\/", "", $7)}'
+          awk '{print $6 " " substr($7, 3)}'
       - run: ls -lR
