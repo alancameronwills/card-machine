@@ -3,7 +3,7 @@ run-name: ${{github.actor}} making manifest
 on:
   push:
     branches:
-      - main
+      - master
 jobs:
   Make-Manaifest:
     runs-on: ubuntu-latest
