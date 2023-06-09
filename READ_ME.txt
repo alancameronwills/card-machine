@@ -40,7 +40,6 @@ Content of this directory:
 	server.sh - Checks server.js is running; if not, calls restart-server.sh
 	restart-server.sh - what it says
 	update_code.js - Get code updates from GitHub
-* gen-manifest.ps1	- Dev tool for creating manifest.txt
 * manifest.txt	- List of files to be copied from GitHub.
 * READ_ME.txt	- This file
 * run.sh			- Called when the window system starts. Opens the browser fullscreen on index.html
