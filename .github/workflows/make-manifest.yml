@@ -3,7 +3,7 @@ run-name: ${{github.actor}} making manifest
 on:
   push:
     branches:
-      - master
+      - masterxxx
     paths-ignore:
       - 'manifest.txt'
 jobs:
@@ -14,7 +14,7 @@ jobs:
       - name: Update manifest.txt
         run:  |
           find . -path "./manifest.txt" -prune -o -path "./.git*" -prune -o -type f -print | 
-          xargs ls -l --time-style=+%d/%m%YT%H:%M:%S |
+          xargs ls -l --time-style=+%d/%m/%YT%H:%M:%S |
           awk '{print $6 " " substr($7, 3)}' > manifest.txt
       - run: cat manifest.txt
       - name: Checkin manifest.txt

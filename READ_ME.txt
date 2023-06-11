@@ -32,7 +32,7 @@ Content of this directory:
 			"!" in the name ==> update-code only gets the items for local systemID
 	css/*
 	js/*
-* ¬ cred-*/card-machine.config	- [On donation machine only] Credentials specific to the machine. 
+¬ cred-*/card-machine.config	- [On donation machine only] Credentials specific to the machine. 
 		Includes the ID of the card terminal, account credentials for SquareUp.
 		No copy of this file on GitHub.
 * server/
@@ -40,11 +40,10 @@ Content of this directory:
 	server.sh - Checks server.js is running; if not, calls restart-server.sh
 	restart-server.sh - what it says
 	update_code.js - Get code updates from GitHub
-* manifest.txt	- List of files to be copied from GitHub.
 * READ_ME.txt	- This file
 * run.sh			- Called when the window system starts. Opens the browser fullscreen on index.html
 * update-code.sh	- Runs server/update_code.js on NodeJS and puts the results in a log file. Called 10 minutes after the donations machine starts up
 
 ¬ ~/.config/autostart/run-donations.desktop - X-Windows config file starts card-machine/run.sh on power up
 
-¬  = Not duplicated on master = not included in manifest.txt
+¬  = Not duplicated on master
