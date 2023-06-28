@@ -9,7 +9,7 @@ sleep 1m # Allow WiFi router to start
 while true
 do
 	sleep 10m
-	./update-code.sh
+	./fetch-code.sh
 	sleep 8h
 done >> log-update.log 2>&1 &
 (cd server; ./server.sh) >>log-server.log 2>&1 &
