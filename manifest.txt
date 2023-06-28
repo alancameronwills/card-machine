@@ -1,4 +1,6 @@
-09/04/2023T12:15:36 .gitignore
+
+09/06/2023T13:10:24 .github/workflows/make-manifest.yml
+11/06/2023T01:12:01 .gitignore
 25/05/2023T00:11:16 client/aix.html
 05/05/2023T12:30:40 client/code.html
 30/04/2023T21:45:49 client/css/client.css
@@ -31,19 +33,23 @@
 10/04/2023T18:58:04 client/img/slides!thomas/s10.jpg
 10/04/2023T19:00:57 client/img/slides!thomas/s11.jpg
 10/04/2023T18:59:54 client/img/slides!thomas/s12.jpg
-10/04/2023T19:00:29 client/img/slides!thomas/s13.jpg
+25/06/2023T11:13:56 client/img/slides!thomas/s13.jpg
 10/04/2023T19:00:43 client/img/slides!thomas/s14.jpg
 10/04/2023T19:01:10 client/img/slides!thomas/s15.jpg
 05/05/2023T00:37:15 client/img/slides!thomas/s-i-1.jpg
 11/04/2023T01:55:52 client/index.html
 04/06/2023T22:45:51 client/js/client.js
 26/02/2023T21:51:42 client/js/jquery.min.js
+26/06/2023T23:43:03 fetch-code.sh
 09/04/2023T12:17:25 go.cmd
-04/06/2023T23:04:16 manifest.txt
-04/04/2023T00:43:08 READ_ME.txt
+28/06/2023T20:11:21 manifest.txt
+11/06/2023T01:12:03 READ_ME.txt
 04/06/2023T22:18:41 run.sh
+10/06/2023T16:44:27 server/get_manifest.js
 05/03/2023T19:55:13 server/restart-server.sh
 04/06/2023T20:16:52 server/server.js
 05/03/2023T18:21:31 server/server.sh
 10/04/2023T18:24:20 server/update_code.js
 09/03/2023T21:55:41 update-code.sh
+
+
