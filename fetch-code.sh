@@ -1,3 +1,5 @@
+echo
+date
 if test ! -d ~/src/card-machine ;
 then 
 	mkdir ~/src
