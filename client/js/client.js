@@ -103,9 +103,13 @@ class CardTerminal {
 						jQuery("#status").html(status);
 						if (status != "IN_PROGRESS" && status != "PENDING") {
 							if (status == "COMPLETED") {
-								this.success();
-								transaction.status = status;
-								analytics("transaction", transaction);
+								// if this and the previous poll took longer than transactionProgressInterval to respond,
+								// we might already have success - don't replicate analytics:
+								if (state.isPending()) { 
+									this.success();
+									transaction.status = status;
+									analytics("transaction", transaction);
+								}
 							} else {
 								this.cancel(null); // Cancelled from terminal
 								transaction.status = ar?.data?.object?.checkout?.cancel_reason || status;
