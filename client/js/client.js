@@ -142,7 +142,7 @@ class CardTerminal {
 		if (transaction) {
 			fetch("/card-operation.php?action=cancel&idem=" + transaction.id)
 				.catch(e => console.log("Cancel: " + e.message));
-			analytics("Cancel", transaction);
+			analytics("Cancel " + Math.round((Date.now() - transaction.start)/1000), transaction);
 		}
 		if (failed) {
 			state.disconnected();
