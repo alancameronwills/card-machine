@@ -105,7 +105,7 @@ class CardTerminal {
 							if (status == "COMPLETED") {
 								// if this and the previous poll took longer than transactionProgressInterval to respond,
 								// we might already have success - don't replicate analytics:
-								if (state.isPending()) { 
+								if (state.isPending()) {
 									this.success();
 									transaction.status = status;
 									analytics("transaction", transaction);
@@ -142,7 +142,7 @@ class CardTerminal {
 		if (transaction) {
 			fetch("/card-operation.php?action=cancel&idem=" + transaction.id)
 				.catch(e => console.log("Cancel: " + e.message));
-			analytics("Cancel " + Math.round((Date.now() - transaction.start)/1000), transaction);
+			analytics("Cancel " + Math.round((Date.now() - transaction.start) / 1000), transaction);
 		}
 		if (failed) {
 			state.disconnected();
@@ -321,6 +321,7 @@ class Services {
 	show() {
 		$("#services").show(500);
 		window.calendar.calendarLoad("servicesCalendar", 4);
+		window.till.load("takings");
 		clearTimeout(this.timer);
 		this.timer = setTimeout(() => this.hide(), servicesShowPeriod * 1000);
 		this.hideDebounceTimer = setTimeout(() => {
@@ -335,6 +336,37 @@ class Services {
 			clearTimeout(this.timer);
 			$("#services").hide(500);
 		}
+	}
+}
+
+class Till {
+	async load(location, rows = 7) {
+		const truncDate = 10;
+		let days = [];
+		let amounts = [];
+		{
+			let dates = {};
+			let lines = await fetch(`/get-donation-log?agg=${truncDate}&lines=${rows}`).then(r=>r.text());
+			lines.split('\n').forEach(line => {
+				let dateAmount = line.split('\t');
+				if (dateAmount.length > 1) {
+					dates[dateAmount[0]] = dateAmount[1];
+				}
+			});
+			let ago = new Date();
+			ago.setDate(ago.getDate() - rows);
+			for (let i = 0; i < rows; i++) {
+				ago.setDate(ago.getDate() + 1);
+				amounts.push(dates[ago.toISOString().substring(0, truncDate)] || "0");
+				days.push(['S', 'M', 'T', 'W', 'T', 'F', 'S'][ago.getDay()]);
+			}
+		}
+		let html= `<div onclick="event.stopPropagation(); event.target.style.opacity=1;">
+				<style>.tillList {opacity:0; display:flex;flex-direction:row;position:absolute;font-size:12pt;color:white;} 
+				.tillList>div {user-select:none;display:flex;flex-direction:column;align-items:center;margin:0 10px;}</style>
+				<div class='tillList'>${days.reduce((p,c,i,a)=>p+`<div><div>${c}</div><div>${amounts[i]}</div></div>`, "")}</div>
+			</div>`;
+		document.getElementById(location).innerHTML = html;
 	}
 }
 
@@ -466,6 +498,7 @@ $(async () => {
 	window.services = new Services();
 	window.cardTerminal = new CardTerminal(recentActivityPingInterval, idlePingInterval);
 	window.calendar = new Calendar();
+	window.till = new Till();
 	window.romanClock = new RomanClock();
 	window.configs = await SetPageHoles();
 	analytics("Startup " + location.origin);

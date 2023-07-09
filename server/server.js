@@ -6,6 +6,8 @@ const appInsights = require('applicationinsights');
 
 const logverbose = false;
 
+const donationLog = "log-donations.txt";
+
 
 const contentTypes = {
 	".css": "text/css",
@@ -44,6 +46,13 @@ const contentTypes = {
 				status: 200,
 				contentType: "application/json"
 			}
+		},
+		"log-donation": async(params) => {
+			logDonation(params.amount);
+			return {body:`ok ${params.amount}`, status: 200, contentType: "text/plain"}
+		},
+		"get-donation-log": async(params) => { 
+			return {body: await getDonationLog(params.agg, params.lines), status: 200, contentType: "text/plain"}
 		}
 	};
 
@@ -283,6 +292,37 @@ async function calendar(params, credentials) {
 		+ `/events?timeMin=${today.toISOString()}&timeMax=${todayMonth.toISOString()}`
 		+ `&singleEvents=true&orderBy=startTime&key=${credentials.googleApiKey}`;
 	return await getUrl({ u: url });
+}
+
+// TODO: Shorten donation log periodically
+
+async function logDonation(amount) {
+	fs.appendFile(donationLog, `${(new Date()).toISOString()}\t${amount}\n`);
+}
+
+async function getDonationLog(agg, lines) {
+	try {
+		let logString = await fs.readFile(donationLog, {encoding: 'utf8'});
+		if (!agg) return logString;
+		let logLines = logString.split('\n');
+		let aggregated = [];
+		let previousLineDate = "";
+		let currentSum = 0;
+		logLines.forEach(line => {
+			let lineDate = line.substring(0,agg);
+			if (lineDate != previousLineDate) {
+				if (previousLineDate) aggregated.push(`${previousLineDate}\t${currentSum}`);
+				currentSum = 0;
+				previousLineDate = lineDate;
+			}
+			currentSum += Number.parseInt(line.split('\t')?.[1] || "0");
+		});
+		if(previousLineDate) aggregated.push(`${previousLineDate}\t${currentSum}`);
+		if (!lines) return aggregated.join('\n');
+		if (lines) return aggregated.slice(0-lines).join('\n');
+	} catch(err) {
+		return "";
+	}
 }
 
 async function appInsightsQuery(params, credentials) {

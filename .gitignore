@@ -3,7 +3,8 @@
 /cred-*
 /server/package*
 /server/package.json
+/go.cmd
+/log-*
+/.gitignore
 jquery*
-go.cmd
-.gitignore
 .*
