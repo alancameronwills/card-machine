@@ -294,8 +294,6 @@ async function calendar(params, credentials) {
 	return await getUrl({ u: url });
 }
 
-// TODO: Shorten donation log periodically
-
 async function logDonation(amount) {
 	fs.appendFile(donationLog, `${(new Date()).toISOString()}\t${amount}\n`);
 }

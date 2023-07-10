@@ -8,7 +8,6 @@ then
 fi
 
 
-(  cd ~/src/card-machine
-   git fetch --all &&
-   git reset --hard origin/master ) &&
-cp -ruv ~/src/card-machine/* ~/card-machine
+cd ~/src/card-machine
+git fetch --all &&
+git reset --hard origin/master 
