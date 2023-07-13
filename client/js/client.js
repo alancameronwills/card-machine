@@ -321,7 +321,7 @@ class Services {
 	show() {
 		$("#services").show(500);
 		window.calendar.calendarLoad("servicesCalendar", 4);
-		window.till.load("takings");
+		window.receipts.load("takings");
 		clearTimeout(this.timer);
 		this.timer = setTimeout(() => this.hide(), servicesShowPeriod * 1000);
 		this.hideDebounceTimer = setTimeout(() => {
@@ -339,7 +339,7 @@ class Services {
 	}
 }
 
-class Till {
+class Receipts {
 	async load(location, rows = 7) {
 		const truncDate = 10;
 		let days = [];
@@ -361,12 +361,15 @@ class Till {
 				days.push(['S', 'M', 'T', 'W', 'T', 'F', 'S'][ago.getDay()]);
 			}
 		}
-		let html= `<div onclick="event.stopPropagation(); event.target.style.opacity=1;">
-				<style>.tillList {opacity:0; display:flex;flex-direction:row;position:absolute;font-size:12pt;color:white;} 
-				.tillList>div {user-select:none;display:flex;flex-direction:column;align-items:center;margin:0 10px;}</style>
-				<div class='tillList'>${days.reduce((p,c,i,a)=>p+`<div><div>${c}</div><div>${amounts[i]}</div></div>`, "")}</div>
+		document.getElementById(location).innerHTML =
+			`<div onclick="event.stopPropagation(); event.target.style.opacity=1;">
+				<style>
+					.receipts {opacity:0; display:flex;flex-direction:row;position:absolute;font-size:12pt;color:white;} 
+					.receipts>div {display:flex;flex-direction:column;align-items:center;margin:0 10px;}
+					.receipts div {user-select:none;pointer-events:none;} 
+				</style>
+				<div class='receipts'>${days.reduce((p,c,i,a)=>p+`<div><div>${c}</div><div>${amounts[i]}</div></div>`, "")}</div>
 			</div>`;
-		document.getElementById(location).innerHTML = html;
 	}
 }
 
@@ -498,7 +501,7 @@ $(async () => {
 	window.services = new Services();
 	window.cardTerminal = new CardTerminal(recentActivityPingInterval, idlePingInterval);
 	window.calendar = new Calendar();
-	window.till = new Till();
+	window.receipts = new Receipts();
 	window.romanClock = new RomanClock();
 	window.configs = await SetPageHoles();
 	analytics("Startup " + location.origin);
