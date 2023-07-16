@@ -18,10 +18,12 @@
 			// ld: 0, // Defines the load delay (in ms) before attempting to load the sdk. -1 = block page load and add to head. (default) = 0ms load after timeout,
 			// useXhr: 1, // Use XHR instead of fetch to report failures (if available),
 			crossOrigin: "anonymous", // When supplied this will add the provided value as the cross origin attribute on the script tag
-			// Reduce telemetry by not sending results of every ping:
-			onInit: (ai) => {
+			onInit: (ai) => {  // onInit can be null if not used
 				ai.addTelemetryInitializer(envelope => {
+					// Suppress dependency telemetry - not necessary to report every ping:
 					if (envelope.baseType == "RemoteDependencyData") return false;
+					// Add location to non-custom telemetry:
+					// envelope["data"]["location"] = window?.configs?.location;
 					return true;
 				})
 			},

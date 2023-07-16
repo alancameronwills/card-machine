@@ -1,6 +1,7 @@
 const http = require('http');
 const util = require('util');
 const fs = require('fs/promises');
+const fssync = require('fs');
 const { argv } = require('process');
 const appInsights = require('applicationinsights');
 
@@ -295,7 +296,11 @@ async function calendar(params, credentials) {
 }
 
 async function logDonation(amount) {
-	fs.appendFile(donationLog, `${(new Date()).toISOString()}\t${amount}\n`);
+	try {
+		fssync.appendFileSync(donationLog, `${(new Date()).toISOString()}\t${amount}\n`);
+	} catch (err) {
+		log("logDonation: " + util.inspect(err));
+	}
 }
 
 async function getDonationLog(agg, lines) {
