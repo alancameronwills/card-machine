@@ -108,6 +108,7 @@ class CardTerminal {
 								if (state.isPending()) {
 									this.success();
 									transaction.status = status;
+									fetch('/log-donation?amount='+transaction.amount);
 									analytics("transaction", transaction);
 								}
 							} else {

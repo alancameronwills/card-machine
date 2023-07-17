@@ -1,14 +1,11 @@
 const http = require('http');
 const util = require('util');
 const fs = require('fs/promises');
-const fssync = require('fs');
 const { argv } = require('process');
 const appInsights = require('applicationinsights');
+let donationLog="log-donations.txt";
 
 const logverbose = false;
-
-const donationLog = "log-donations.txt";
-
 
 const contentTypes = {
 	".css": "text/css",
@@ -26,6 +23,7 @@ const contentTypes = {
 (async () => {
 	let root = await fs.realpath('.');
 	root = root.replace("/server", "");
+	donationLog = `${root}/log-donations.log`;
 	const clientRoot = `${root}/client`;
 	log("Client root: " + clientRoot);
 	const credentials = await getCredentials(root, argv?.[3]);
@@ -297,7 +295,7 @@ async function calendar(params, credentials) {
 
 async function logDonation(amount) {
 	try {
-		fssync.appendFileSync(donationLog, `${(new Date()).toISOString()}\t${amount}\n`);
+		fs.appendFile(donationLog, `${(new Date()).toISOString()}\t${amount}\n`);
 	} catch (err) {
 		log("logDonation: " + util.inspect(err));
 	}
