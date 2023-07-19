@@ -108,7 +108,7 @@ class CardTerminal {
 								if (state.isPending()) {
 									this.success();
 									transaction.status = status;
-									fetch('/log-donation?amount='+transaction.amount);
+									fetch('/log-donation?amount=' + transaction.amount);
 									analytics("transaction", transaction);
 								}
 							} else {
@@ -347,7 +347,7 @@ class Receipts {
 		let amounts = [];
 		{
 			let dates = {};
-			let lines = await fetch(`/get-donation-log?agg=${truncDate}&lines=${rows}`).then(r=>r.text());
+			let lines = await fetch(`/get-donation-log?agg=${truncDate}&lines=${rows}`).then(r => r.text());
 			lines.split('\n').forEach(line => {
 				let dateAmount = line.split('\t');
 				if (dateAmount.length > 1) {
@@ -369,7 +369,7 @@ class Receipts {
 					.receipts>div {display:flex;flex-direction:column;align-items:center;margin:0 10px;}
 					.receipts div {user-select:none;pointer-events:none;} 
 				</style>
-				<div class='receipts'>${days.reduce((p,c,i,a)=>p+`<div><div>${c}</div><div>${amounts[i]}</div></div>`, "")}</div>
+				<div class='receipts'>${days.reduce((p, c, i, a) => p + `<div><div>${c}</div><div>${amounts[i]}</div></div>`, "")}</div>
 			</div>`;
 	}
 }
@@ -445,20 +445,27 @@ class RomanClock {
 
 var previousAnalyticsMessage = "";
 var lastTelemetry = 0;
+var failCount = 0;
 function analytics(message, transaction) {
-	let locatedMessage = (window?.configs?.location || "") + " " + message;
-	let logMessage = locatedMessage;
-	if (transaction) {
-		transaction.age = (Date.now() - transaction.start) / 1000;
-		logMessage += " " + JSON.stringify(transaction);
-	}
-	if (logMessage != previousAnalyticsMessage || (Date.now() - lastTelemetry) / 60000 > telemetryIdleMinutes) {
-		console.log(new Date().toISOString() + " " + logMessage);
-		previousAnalyticsMessage = logMessage;
-		lastTelemetry = Date.now();
-		let properties = { location: window?.configs?.location };
-		if (transaction) properties.transaction = transaction;
-		appInsights.trackEvent({ name: locatedMessage, properties: properties });
+	try {
+		let locatedMessage = (window?.configs?.location || "") + " " + message;
+		let logMessage = locatedMessage;
+		if (transaction) {
+			transaction.age = (Date.now() - transaction.start) / 1000;
+			logMessage += " " + JSON.stringify(transaction);
+		}
+		if (logMessage != previousAnalyticsMessage || (Date.now() - lastTelemetry) / 60000 > telemetryIdleMinutes) {
+			console.log(new Date().toISOString() + " " + logMessage);
+			previousAnalyticsMessage = logMessage;
+			lastTelemetry = Date.now();
+			let properties = { location: window?.configs?.location };
+			if (transaction) properties.transaction = transaction;
+			appInsights.trackEvent({ name: locatedMessage, properties: properties });
+			appInsights.flush();
+		}
+	} catch (err) {
+		console.log("Analytics failure " + failCount);
+		if (failCount++>10) window.location.reload();
 	}
 }
 
