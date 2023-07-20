@@ -464,8 +464,8 @@ function analytics(message, transaction) {
 			appInsights.flush();
 		}
 	} catch (err) {
-		console.log("Analytics failure " + failCount);
-		if (failCount++>10) window.location.reload();
+		console.log(`Analytics failure ${failCount} ${err.message}`);
+		if (failCount++>5) window.location.reload();
 	}
 }
 
