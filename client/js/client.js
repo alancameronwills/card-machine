@@ -171,7 +171,7 @@ class CardTerminal {
 								pingid = Date.now();
 								pingIndicator = "";
 								// Check for App Insights connection problem:
-								if(pingSuccessCounter++ == 3 && new Date.getHours()<9) {
+								if(pingSuccessCounter++ == 3 && new Date().getHours()<9) {
 									// Connection now well established and it's early enough for messing about.
 									if (Array.isArray(appInsights["queue"]) && appInsights["queue"].length == 0) {
 										// appInsights failed to load because of initial connection problem
