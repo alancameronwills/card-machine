@@ -378,7 +378,7 @@ class Receipts {
 					.receipts>div {display:flex;flex-direction:column;align-items:center;margin:0 10px;}
 					.receipts div {user-select:none;pointer-events:none;} 
 				</style>
-				<div class='receipts'>${days.reduce((p, c, i, a) => p + `<div><div>${c}</div><div>${amounts[i]}</div></div>`, "")}</div>
+				<div class='receipts'>${days.reduce((p, c, i, a) => p + `<div><div>${c}</div><div>${amounts[i]/100}</div></div>`, "")}</div>
 			</div>`;
 	}
 }
