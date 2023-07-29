@@ -7,6 +7,7 @@ let transactionTimeout = 300; // Cancel transaction if visitor walks away
 let transactionComFailTimeout = 10; // How long to keep trying if ping fails during a transaction
 let idlePingInterval = 120; // Check whether card terminal is alive at this interval
 let recentActivityPingInterval = 20; // Check card terminal more often if recently failed or transaction
+let nightPingInterval = 1200; // Slower pings overnight
 let pauseSlidePeriod = 60; // Pause if visitor clicks slide pause button
 let leftSlidePause = 10;  // Extra pause if visitor clicks slide left button
 let telemetryIdleMinutes = 60; // Report at least once every _ minutes
@@ -64,14 +65,10 @@ let state = {
 };
 
 class CardTerminal {
-	/**
-	 * 
-	 * @param {*} pingSeconds Seconds between pings
-	 * @param {*} idlePingInterval Seconds between pings on successful ping
-	 */
-	constructor(pingSeconds = 10, idlePingInterval = 30) {
-		this.pingInterval = pingSeconds;
-		this.slowPingFactor = idlePingInterval / pingSeconds;
+	constructor() {
+		this.pingInterval = recentActivityPingInterval;
+		this.slowPingFactor = idlePingInterval / recentActivityPingInterval;
+		this.nightPingFactor = nightPingInterval / recentActivityPingInterval;
 		this.pingCheck();
 	}
 	donate(amount) {
@@ -191,10 +188,11 @@ class CardTerminal {
 						if (pingIndicator.length == 0) {
 							state.connected();
 							analytics("Connected");
-							pingCountDown = this.slowPingFactor;
+							pingCountDown = this.isDaytime() ? this.slowPingFactor : this.nightPingFactor;
 						} else if (pingIndicator.length > 3) {
 							state.disconnected();
 							analytics("Disconnected");
+							if (!this.isDaytime()) pingCountDown = this.nightPingFactor;
 						}
 					})
 					.catch((e) => {
@@ -213,6 +211,10 @@ class CardTerminal {
 				jQuery("#pingstatus").html("|");
 			}
 		}, this.pingInterval * 1000);
+	}
+	isDaytime() {
+		let h = new Date().getHours();
+		return h > 7 && h < 20;
 	}
 }
 
@@ -351,6 +353,7 @@ class Services {
 
 class Receipts {
 	async load(location, rows = 7) {
+		$(location).html("");
 		const truncDate = 10;
 		let days = [];
 		let amounts = [];
@@ -371,7 +374,7 @@ class Receipts {
 				days.push(['S', 'M', 'T', 'W', 'T', 'F', 'S'][ago.getDay()]);
 			}
 		}
-		document.getElementById(location).innerHTML =
+		$(location).html(
 			`<div onclick="event.stopPropagation(); event.target.style.opacity=1;">
 				<style>
 					.receipts {opacity:0; display:flex;flex-direction:row;position:absolute;font-size:12pt;color:white;} 
@@ -379,7 +382,7 @@ class Receipts {
 					.receipts div {user-select:none;pointer-events:none;} 
 				</style>
 				<div class='receipts'>${days.reduce((p, c, i, a) => p + `<div><div>${c}</div><div>${amounts[i]/100}</div></div>`, "")}</div>
-			</div>`;
+			</div>`);
 	}
 }
 
@@ -516,7 +519,7 @@ $(async () => {
 	window.buttons = new Buttons();
 	window.slides = new Slides();
 	window.services = new Services();
-	window.cardTerminal = new CardTerminal(recentActivityPingInterval, idlePingInterval);
+	window.cardTerminal = new CardTerminal();
 	window.calendar = new Calendar();
 	window.receipts = new Receipts();
 	window.romanClock = new RomanClock();
