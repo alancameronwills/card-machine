@@ -353,7 +353,7 @@ class Services {
 
 class Receipts {
 	async load(location, rows = 7) {
-		$(location).html("");
+		$(`#${location}`).html("");
 		const truncDate = 10;
 		let days = [];
 		let amounts = [];
@@ -374,7 +374,7 @@ class Receipts {
 				days.push(['S', 'M', 'T', 'W', 'T', 'F', 'S'][ago.getDay()]);
 			}
 		}
-		$(location).html(
+		$(`#${location}`).html(
 			`<div onclick="event.stopPropagation(); event.target.style.opacity=1;">
 				<style>
 					.receipts {opacity:0; display:flex;flex-direction:row;position:absolute;font-size:12pt;color:white;} 
