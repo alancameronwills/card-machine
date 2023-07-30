@@ -394,7 +394,7 @@ class Calendar {
 
 	calendarLoad(location, rows = 4) {
 		if (this.stopped) return;
-		let serviceWords = ["communion", "prayer", "service", "vigil", "mass"];
+		let serviceWords = (window?.configs?.calendarWords || "communion prayer service vigil mass").split(" ");
 		fetch('/calendar')
 			.then(r => {
 				if (r.status == 444) {
@@ -506,16 +506,16 @@ function waitNotNull(property, interval = 200, timeout = 2000) {
 	})
 }
 
-async function SetPageHoles() {
-	let configs = await fetch("config").then(r => r.json());
-	if (configs.churchName) $("#pleaseSupport").text(`Please support ${configs.churchName}`);
-	if (configs.plea) $("#plea").html(`<span>${configs.plea}</span>`);
-	if (configs.offline) $("#offline").html(configs.offline);
-	if (configs.buttonPosition) $("#extraControls").css(configs.buttonPosition);
+async function SetPageHoles(configs) {
+	if (configs["churchName"]) $("#pleaseSupport").text(`Please support ${configs.churchName}`);
+	if (configs["plea"]) $("#plea").html(`<span>${configs.plea}</span>`);
+	if (configs["offline"]) $("#offline").html(configs.offline);
+	if (configs["buttonPosition"]) $("#extraControls").css(configs.buttonPosition);
 	return configs;
 }
 
 $(async () => {
+	window.configs = await fetch("config").then(r => r.json()).catch(r=>console.log(r),{});
 	window.buttons = new Buttons();
 	window.slides = new Slides();
 	window.services = new Services();
@@ -523,6 +523,6 @@ $(async () => {
 	window.calendar = new Calendar();
 	window.receipts = new Receipts();
 	window.romanClock = new RomanClock();
-	window.configs = await SetPageHoles();
+	SetPageHoles(window.configs);
 	analytics("Startup " + location.origin);
 })
