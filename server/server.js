@@ -2,7 +2,7 @@ const http = require('http');
 const util = require('util');
 const fs = require('fs/promises');
 const { argv } = require('process');
-const appInsights = require('applicationinsights');
+// const appInsights = require('applicationinsights');
 let donationLog="log-donations.txt";
 
 const logverbose = false;
