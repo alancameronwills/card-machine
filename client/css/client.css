@@ -288,9 +288,12 @@ article:not(.pending) #status {
 .bottomRight {
 	position: fixed;
 	bottom: 0.5vh;
+	left: 51vw;
 	right: 0.5vw;
 	display: flex;
 	height: auto;
+    justify-content: space-between;
+    align-items: stretch;
 }
 
 #services {
@@ -336,6 +339,7 @@ article:not(.pending) #status {
 	color: white;
 	align-items: flex-end;
 	padding-left: 1em;
+	width: 12em;
 }
 
 .clock #ss {

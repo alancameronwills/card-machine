@@ -214,7 +214,7 @@ class CardTerminal {
 	}
 	isDaytime() {
 		let h = new Date().getHours();
-		return h > 7 && h < 20;
+		return h > 7 && h < 22;
 	}
 }
 
