@@ -386,6 +386,17 @@ class Receipts {
 	}
 }
 
+class CalendarDate {
+	constructor(dateOrTime) {
+		this.isTime = !!dateOrTime.dateTime;
+		this.when = new Date(dateOrTime.dateTime || dateOrTime.date);
+	}
+	print() {
+		return this.isTime ? `${this.when.getHours()}:${this.when.getMinutes()} ${this.when.toDateString()}`
+			: this.when.toDateString();
+	}
+}
+
 class Calendar {
 	constructor() {
 		this.stopped = false;
@@ -406,12 +417,11 @@ class Calendar {
 				let table = ["<table class='calendar'><tr><td>"];
 				let rowCount = 0;
 				r.items.forEach(item => {
-					let when = new Date(item.start.dateTime);
+					let when = new CalendarDate(item.start);
 					let summaryLC = item.summary.toLowerCase();
 					if (serviceWords.some(s => summaryLC.indexOf(s) >= 0)) {
-						let whenDate = new Date(when);
 						if (rowCount++ < rows) {
-							table.push(`${item.summary} </td><td> ${whenDate.getHours()}:${whenDate.getMinutes()} ${whenDate.toDateString()}</td></tr><tr><td>`);
+							table.push(`${item.summary} </td><td> ${when.print()}</td></tr><tr><td>`);
 						}
 					}
 				});
