@@ -48,9 +48,9 @@
 		<div id="donation-block">
 			<div class="chunk button-block" id="buttonGroup">
 				<div id="moneyButtons">
-					<h2 id="pleaseSupport">Please support this church</h2>
-					<p id="plea"></p>
-					<h3>Touch to donate by using your card or phone:</h3>
+					<h2 id="pleaseSupport" class="label">Please support this church</h2>
+					<p id="plea" class="label"></p>
+					<h3 class="label" id="touchToDonateLabel">Touch to donate by using your card or phone:</h3>
 					<div id="amountButtons" class="buttonSet">
 						<div id="button3p" class="whiteItem" onclick="cardTerminal.donate(300)"
 							oncontextmenu="cardTerminal.donate(300)">
@@ -71,27 +71,25 @@
 					</div>
 				</div>
 				<div id="pleasePresent">
-					<p>Please tap or insert your card
+					<p class="label" id="tapCardLabel">Please tap or insert your card
 					</p>
 					<div class="arrowcontainer">
 						<span class="arrow right"></span>
 					</div>
 					<div class="buttonSet">
 						<div class="whiteItem" onclick="cardTerminal.cancel()" oncontextmenu="cardTerminal.cancel()">
-							<span>Cancel</span>
+							<span class="label" id="cancelLabel">Cancel</span>
 						</div>
 					</div>
 				</div>
 				<div id="thankyou">
 					<div class="whiteItem">
-						<span>Thank you!</span>
+						<span class="label" id="thankyouLabel">Thank you!</span>
 					</div>
 				</div>
 				<div id="paypal">
-					<div class="buttonSet" id="offline">
-						<div>
-							<h2>Please support the church with a generous donation </h2>
-						</div>
+					<div class="buttonSet label" id="offline">
+							<h2 >Please support the church with a generous donation </h2>
 					</div>
 
 				</div>
@@ -100,15 +98,18 @@
 					<div id="pingstatus"></div>
 				</div>
 				<div class="bottomRight">
-					<div class="clock">
-						<div id="hhmm">22:33</div>
-						<div id="ss">:44</div>
+					<div id="languageClock">
+						<button onclick="languageSwitch.flip()" class="label" id="languageLabel">Cymraeg</button>
+						<div class="clock">
+							<div id="hhmm">22:33</div>
+							<div id="ss">:44</div>
+						</div>
 					</div>
 					<span id="calendarExtract"></span>
 					<div class="whiteItem" id="servicesButton">
 						<div style="text-align:center;width:100%;margin-top:-1vw;">
-							<small><i>Touch for</i></small>
-							<br />Service info
+							<small><i class="label" id="touchForLabel">Touch for</i></small>
+							<br /><span class="label" id="serviceInfoLabel">Service info</span>
 						</div>
 					</div>
 				</div>
@@ -135,9 +136,13 @@
 			</div>
 		</div>
 		<div id="services" style="display:none">
-			<img id="servicesImg" />
+			<figure id="servicesImage">
+			</figure>
 			<div id="servicesCalendar">
 			</div>
+			<button onclick="event.stopPropagation();languageSwitch.flip()"  id="servicesLanguageButton" class="label">
+				Cymraeg
+			</button>
 			<div id="takings"></div>
 		</div>
 	</article>

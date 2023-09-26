@@ -37,7 +37,7 @@ const contentTypes = {
 		"analytics" : appInsightsQuery,
 		"ping": async () => { return { body: 'pong', status: 200, contentType: "text/plain" } },
 		"config": async () => {
-			let configFilter = ["churchName", "offline", "location", "buttonPosition", "plea", "calendarWords"];
+			let configFilter = ["churchName", "offline", "location", "buttonPosition", "plea", "calendarWords", "strings"];
 			let config = configFilter.reduce((o, v) => { o[v] = credentials[v] || ""; return o; }, {});
 			if (argv?.[4]) config.location += argv[4];
 			return {

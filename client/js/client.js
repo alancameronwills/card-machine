@@ -218,29 +218,88 @@ class CardTerminal {
 	}
 }
 
+class SlideSet {
+	constructor() {
+		this.slides = {en:[],cy:[]};
+		this.currentIndex = 0;
+		this.currentLanguage = "en";
+	}
+	nextIndex(language="en") {
+		if (!Array.isArray(this.slides[language])) this.slides[language] = [];
+		return this.slides[language].length;
+	}
+	add(item, language="en") {
+		if (!Array.isArray(this.slides[language])) this.slides[language] = [];
+		this.slides[language].push(item);
+	}
+	current() {
+		return this.slides[this.currentLanguage][this.currentIndex];
+	}
+	next (inc, zeroPassing) {
+		let length = this.slides[this.currentLanguage].length;
+		this.currentIndex = (this.currentIndex + inc + length) % length;
+		if (this.currentIndex==0 && zeroPassing) zeroPassing();
+		return this.current();
+	}
+	changeLanguage(language) {
+		if (this.slides[language] && this.slides[language].length>0){
+			this.currentLanguage = language;
+			// Should be the same number of slides in each language, but just in case:
+			this.currentIndex = this.currentIndex % this.slides[language].length;
+		}
+	}
+}
+
 class Slides {
 	constructor() {
-		this.numberOfSlides = 0;
+		languageSwitch.observer(this);
+		this.slides = new SlideSet();
+		this.info = new SlideSet();
+		this.language = "en"; // Saesneg
+		this.notEnglishCycles = 0;
 		this.imgIndex = 0;
 		this.imgCycle = 0;
 		this.pauseTimer = null;
 		this.go();
 	}
+	change(slideSet, fnChange) {
+		let oldItem = slideSet.current();
+		fnChange(slideSet);
+		oldItem.style.opacity = 0;
+		slideSet.current().style.opacity = 1;
+	}
+	changeLanguage(language) {
+		let lc = s => s.changeLanguage(language);
+		this.change(this.slides, lc);
+		this.change(this.info, lc);
+	}
+	nextSlide(inc, screenSet="slides") {
+		this.change(this[screenSet], s => s.next(inc,
+			 inc==1 && (()=>languageSwitch.countDownToRevert())));
+	}
 	async go() {
-		let slideSet = await this.getSlideSet();
-		if (slideSet.info.length > 0) {
-			$("#servicesImg")[0].src = `${slideSet.info[0]}?v=${version}`;
-		}
-		let figure = $("#bgImage");
-		this.numberOfSlides = 0;
-		for (let slideName of slideSet.show) {
+		let imgSrcList = await this.getImgSrcList();
+
+		// HTML display locations of the sets:
+		this.slides.div = $("#bgImage");
+		this.info.div = $("#servicesImage");
+
+		// Sort screens by set (info or slides) and language 
+		for (let imgSrc of imgSrcList) {
 			let img = document.createElement("img");
-			img.src = `${slideName}?v=${version}`;
-			img.id = `s${this.numberOfSlides}`;
-			if (this.numberOfSlides != 0) img.style.opacity = 0;
-			figure.append(img);
-			this.numberOfSlides++;
+			img.src = `${imgSrc}?v=${version}`;
+			let slideSet = img.src.indexOf("-i-")>0 ? this.info : this.slides;
+			let slideLanguage = img.src.match(/cy[0-9-]/) ? "cy" : "en";
+			let index = slideSet.nextIndex(slideLanguage);
+			img.id = `${slideLanguage}${index}`;
+			img.style.opacity = 0;
+			slideSet.add(img, slideLanguage);	
+			slideSet.div.append(img);
 		}
+		// Set first slide visible:
+		this.change(this.slides, ()=>{});
+		this.change(this.info, ()=>{});
+
 		this.cycleSlides();
 	}
 	cycleSlides() {
@@ -250,11 +309,6 @@ class Slides {
 			this.nextSlide(1);
 			buttons.showExtraButtons(1000);
 		}, slideChangeInterval * 1000);
-	}
-	nextSlide(inc = 1) {
-		document.getElementById(`s${this.imgIndex}`).style.opacity = 0;
-		this.imgIndex = (this.imgIndex + inc + this.numberOfSlides) % this.numberOfSlides;
-		document.getElementById(`s${this.imgIndex}`).style.opacity = 1;
 	}
 
 	pauseCycle(duration = 30000) {
@@ -270,23 +324,12 @@ class Slides {
 		}
 	}
 
-	async getSlideSet() {
-		let showSlides = [];
-		let infoSlides = [];
-		await fetch("list-slides")
+	async getImgSrcList() {
+		return await fetch("list-slides")
 			.then(r => r.json())
-			.then(r => {
-				for (let item of r) {
-					if (item.indexOf('-i-') >= 0)
-						infoSlides.push(item);
-					else
-						showSlides.push(item);
-				}
-			})
 			.catch(err => {
-				showSlides = infoSlides = ["/img/noShowScreen.jpg"];
+				return ["/img/noShowScreen.jpg"];
 			});
-		return { show: showSlides, info: infoSlides };
 	}
 
 }
@@ -322,6 +365,7 @@ class Buttons {
 		$("#servicesButton").contextmenu(event => { event.preventDefault(); services.show() });
 
 		if (location.search.indexOf('nocursor') >= 0) { state.touch(); }
+		if (configs["buttonPosition"]) $("#extraControls").css(configs.buttonPosition);
 	}
 }
 
@@ -347,6 +391,38 @@ class Services {
 		if (!this.hideDebounceTimer) {
 			clearTimeout(this.timer);
 			$("#services").hide(500);
+		}
+	}
+}
+
+class LanguageSwitch {
+	constructor() {
+		this.language = "en";
+		this.observers = [];
+		this.nonEnglishCountDown = 0;
+	}
+	observer(o) {
+		this.observers.push(o);
+	}
+	switchTo(language) {
+		if (language != this.language) {
+			this.language = language;
+			this.observers.forEach(o => o.changeLanguage(language));
+			if (language != "en") {
+				this.nonEnglishCountDown = 2;
+			}
+		}
+	}
+	flip() {
+		if (this.language == "en") this.switchTo("cy");
+		else this.switchTo("en");
+	}
+	countDownToRevert() {
+		if (this.nonEnglishCountDown>0) {
+			this.nonEnglishCountDown--;
+			if (this.nonEnglishCountDown==0) {
+				this.switchTo("en");
+			}
 		}
 	}
 }
@@ -520,12 +596,33 @@ async function SetPageHoles(configs) {
 	if (configs["churchName"]) $("#pleaseSupport").text(`Please support ${configs.churchName}`);
 	if (configs["plea"]) $("#plea").html(`<span>${configs.plea}</span>`);
 	if (configs["offline"]) $("#offline").html(configs.offline);
-	if (configs["buttonPosition"]) $("#extraControls").css(configs.buttonPosition);
 	return configs;
+}
+
+class Labels {
+	constructor() {
+		languageSwitch.observer(this);
+		this.changeLanguage();
+	}
+	changeLanguage(language="en") {
+		if (!window.configs.strings) {
+			SetPageHoles(configs);
+			return;
+		}
+
+		let labels = document.getElementsByClassName("label");
+		for (let i = 0; i<labels.length; i++) {
+			let string = configs.strings[language]?.[labels[i].id];
+			if (string) {
+				labels[i].innerHTML = string;
+			}
+		}
+	}
 }
 
 $(async () => {
 	window.configs = await fetch("config").then(r => r.json()).catch(r=>console.log(r),{});
+	window.languageSwitch = new LanguageSwitch();
 	window.buttons = new Buttons();
 	window.slides = new Slides();
 	window.services = new Services();
@@ -533,6 +630,6 @@ $(async () => {
 	window.calendar = new Calendar();
 	window.receipts = new Receipts();
 	window.romanClock = new RomanClock();
-	SetPageHoles(window.configs);
+	window.labels = new Labels();
 	analytics("Startup " + location.origin);
 })
