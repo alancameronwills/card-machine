@@ -218,34 +218,34 @@ class CardTerminal {
 	}
 }
 
-class SlideSet {
+class CategoryList {
 	constructor() {
-		this.slides = {en:[],cy:[]};
+		this.items = {en:[],cy:[]};
 		this.currentIndex = 0;
-		this.currentLanguage = "en";
+		this.currentCategory = "en";
 	}
-	nextIndex(language="en") {
-		if (!Array.isArray(this.slides[language])) this.slides[language] = [];
-		return this.slides[language].length;
+	nextIndex(category="en") {
+		if (!Array.isArray(this.items[category])) this.items[category] = [];
+		return this.items[category].length;
 	}
-	add(item, language="en") {
-		if (!Array.isArray(this.slides[language])) this.slides[language] = [];
-		this.slides[language].push(item);
+	add(item, category="en") {
+		if (!Array.isArray(this.items[category])) this.items[category] = [];
+		this.items[category].push(item);
 	}
 	current() {
-		return this.slides[this.currentLanguage][this.currentIndex];
+		return this.items[this.currentCategory][this.currentIndex];
 	}
 	next (inc, zeroPassing) {
-		let length = this.slides[this.currentLanguage].length;
+		let length = this.items[this.currentCategory].length;
 		this.currentIndex = (this.currentIndex + inc + length) % length;
 		if (this.currentIndex==0 && zeroPassing) zeroPassing();
 		return this.current();
 	}
-	changeLanguage(language) {
-		if (this.slides[language] && this.slides[language].length>0){
-			this.currentLanguage = language;
-			// Should be the same number of slides in each language, but just in case:
-			this.currentIndex = this.currentIndex % this.slides[language].length;
+	changeLanguage(category) {
+		if (this.items[category] && this.items[category].length>0){
+			this.currentCategory = category;
+			// Should be the same number of items in each category, but just in case:
+			this.currentIndex = this.currentIndex % this.items[category].length;
 		}
 	}
 }
@@ -253,8 +253,8 @@ class SlideSet {
 class Slides {
 	constructor() {
 		languageSwitch.observer(this);
-		this.slides = new SlideSet();
-		this.info = new SlideSet();
+		this.slides = new CategoryList();
+		this.info = new CategoryList();
 		this.language = "en"; // Saesneg
 		this.notEnglishCycles = 0;
 		this.imgIndex = 0;
