@@ -592,27 +592,19 @@ function waitNotNull(property, interval = 200, timeout = 2000) {
 	})
 }
 
-async function SetPageHoles(configs) {
-	if (configs["churchName"]) $("#pleaseSupport").text(`Please support ${configs.churchName}`);
-	if (configs["plea"]) $("#plea").html(`<span>${configs.plea}</span>`);
-	if (configs["offline"]) $("#offline").html(configs.offline);
-	return configs;
-}
-
 class Labels {
 	constructor() {
-		languageSwitch.observer(this);
+		this.strings = {};
+		for (const lang in window.strings) {
+			this.strings[lang] = {...window.strings?.[lang]||{}, ...configs.strings?.[lang] ||{}}
+		}
+		window.languageSwitch.observer(this);
 		this.changeLanguage();
 	}
 	changeLanguage(language="en") {
-		if (!window.configs.strings) {
-			SetPageHoles(configs);
-			return;
-		}
-
 		let labels = document.getElementsByClassName("label");
 		for (let i = 0; i<labels.length; i++) {
-			let string = configs.strings[language]?.[labels[i].id];
+			let string = this.strings[language]?.[labels[i].id];
 			if (string) {
 				labels[i].innerHTML = string;
 			}
