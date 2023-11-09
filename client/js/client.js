@@ -396,8 +396,9 @@ class Services {
 }
 
 class LanguageSwitch {
-	constructor() {
-		this.language = "en";
+	constructor(languages = ["en","cy"]) {
+		this.languages = languages;
+		this.language = languages[0];
 		this.observers = [];
 		this.nonEnglishCountDown = 0;
 	}
@@ -414,8 +415,8 @@ class LanguageSwitch {
 		}
 	}
 	flip() {
-		if (this.language == "en") this.switchTo("cy");
-		else this.switchTo("en");
+		let newIndex = (this.languages.findIndex(s=>s==this.language) + 1) % this.languages.length ;
+		this.switchTo(this.languages[newIndex]);
 	}
 	countDownToRevert() {
 		if (this.nonEnglishCountDown>0) {
@@ -466,15 +467,17 @@ class CalendarDate {
 	constructor(dateOrTime) {
 		this.isTime = !!dateOrTime.dateTime;
 		this.when = new Date(dateOrTime.dateTime || dateOrTime.date);
+		this.options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
 	}
 	print() {
-		return this.isTime ? `${this.when.getHours()}:${this.when.getMinutes()} ${this.when.toDateString()}`
-			: this.when.toDateString();
+		return this.isTime ? `${this.when.getHours()}:${this.when.getMinutes()} ${this.when.toLocaleDateString(undefined,this.options)}`
+			: this.when.toLocaleDateString(undefined, this.options);
 	}
 }
 
 class Calendar {
 	constructor() {
+		if (!window?.configs?.calendarWords) return;
 		this.stopped = false;
 		this.timer = nowAndEvery(calendarRefreshInterval * 1000, () => this.calendarLoad("calendarExtract", 2));
 	}
@@ -614,7 +617,7 @@ class Labels {
 
 $(async () => {
 	window.configs = await fetch("config").then(r => r.json()).catch(r=>console.log(r),{});
-	window.languageSwitch = new LanguageSwitch();
+	window.languageSwitch = new LanguageSwitch(["en","cy"]);
 	window.buttons = new Buttons();
 	window.slides = new Slides();
 	window.services = new Services();
