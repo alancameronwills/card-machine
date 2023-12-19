@@ -92,7 +92,7 @@ article.touch .chunk {
 	background-color: rgba(0, 0, 0, 0.4);
 	padding: 1vw 3vw 1vw 3vw;
 	border-radius: 1vw;
-	border: 1px blue solid;
+	border: 1px #0080a0 solid;
 }
 
 h1 {
@@ -123,6 +123,10 @@ h3 {
 	gap: 2vw;
 }
 
+.buttonSet .whiteItem {
+	animation: border 4s infinite alternate ease-in-out;
+}
+
 #amountButtons .whiteItem:active {
 	background-color: lightgray;
 }
@@ -140,9 +144,10 @@ article.waiting #moneyButtons {
 }
 
 .whiteItem {
-	border-width: 3px;
+	border-width: 2px;
+	border-color: #004040;
 	border-style: solid;
-	animation: border 2s infinite alternate ease-in-out;
+	box-shadow: 1px 1px 2px 2px #004040, 0px 0px 2px 2px #006060 inset;
 }
 
 article {
@@ -203,9 +208,11 @@ article:not(.pending) #status {
 	0% {
 		border-color: rgba(0, 100, 200, 0.4);
 	}
-
+    50% {
+		border-color: gold;
+	}
 	100% {
-		border-color: rgba(0, 100, 200, 1);
+		border-color: rgb(126, 3, 241);
 	}
 }
 

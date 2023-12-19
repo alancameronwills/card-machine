@@ -1,7 +1,7 @@
 window.strings = {
    "en": {
       "pleaseSupport": "Please support our church",
-      "touchToDonateLabel": "Touch to donate by using your card or phone:",
+      "touchToDonateLabel": "Touch here to donate by using your card or phone:",
       "tapCardLabel": "Please tap or insert your card",
       "cancelLabel": "Cancel",
       "thankyouLabel": "Thank you!",
@@ -13,7 +13,7 @@ window.strings = {
    },
    "cy": {
       "pleaseSupport": "Cefnogwch ein heglwys",
-      "touchToDonateLabel": "Cyffyrddwch i roi gyda'ch cerdyn neu ffôn:",
+      "touchToDonateLabel": "Cyffyrddwch yma i roi gyda'ch cerdyn neu ffôn:",
       "tapCardLabel": "Tapiwch neu fewnosodwch eich cerdyn",
       "cancelLabel": "Canslo",
       "thankyouLabel": "Diolch yn fawr!",
