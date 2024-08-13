@@ -291,6 +291,11 @@ article:not(.pending) #status {
 #extraControls:not(.show) {
 	background-color: var(--background);
 }
+#qrcode {
+	display: none;
+	background-size: contain;
+	position: fixed;
+}
 
 .bottomRight {
 	position: fixed;

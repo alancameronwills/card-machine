@@ -366,6 +366,7 @@ class Buttons {
 
 		if (location.search.indexOf('nocursor') >= 0) { state.touch(); }
 		if (configs["buttonPosition"]) $("#extraControls").css(configs.buttonPosition);
+		if (configs["qrPosition"]) $("#qrcode").css(configs.qrPosition);
 	}
 }
 
