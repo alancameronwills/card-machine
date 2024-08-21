@@ -3,7 +3,8 @@ const util = require('util');
 const fs = require('fs/promises');
 const { argv } = require('process');
 // const appInsights = require('applicationinsights');
-let donationLog="log-donations.txt";
+let donationLog="log-donations.log";
+let updatesLog="log-update.log";
 
 const logverbose = false;
 
@@ -24,6 +25,7 @@ const contentTypes = {
 	let root = await fs.realpath('.');
 	root = root.replace("/server", "");
 	donationLog = `${root}/log-donations.log`;
+	updatesLog = `${root}/log-update.log`;
 	const clientRoot = `${root}/client`;
 	log("Client root: " + clientRoot);
 	const credentials = await getCredentials(root, argv?.[3]);
@@ -37,7 +39,7 @@ const contentTypes = {
 		"analytics" : appInsightsQuery,
 		"ping": async () => { return { body: 'pong', status: 200, contentType: "text/plain" } },
 		"config": async () => {
-			let configFilter = ["churchName", "offline", "location", "buttonPosition", "qrPosition", "plea", "calendarWords", "strings"];
+			let configFilter = ["churchName", "offline", "location", "buttonPosition", "qrPosition", "plea", "calendarWords", "strings", "update"];
 			let config = configFilter.reduce((o, v) => { o[v] = credentials[v] || ""; return o; }, {});
 			if (argv?.[4]) config.location += argv[4];
 			return {
@@ -257,7 +259,8 @@ async function getCredentials(root, filter) {
 			config = JSON.parse(await fs.readFile(`${root}/${item}/card-machine.config`));
 		}
 	}
-	log(config?.churchName);
+	config.update = await getUpdateLog();
+	log(`${config?.churchName} ${config?.update} `);
 	return config;
 }
 
@@ -368,6 +371,15 @@ function parseReq(request, defaultPage = "/index.html") {
 		return m;
 	}, {});
 	return { path: path, extension: extension, query: query, params: params, host: host, url: url, method: method, headers: headers };
+}
+
+async function getUpdateLog() {
+	let updates = "No updates";
+	try { updates = await fs.readFile(updatesLog, { encoding: 'utf8' }); } catch {}
+	const s = "HEAD is now at ";
+	let ix = updates.lastIndexOf(s) + s.length;
+	let msg = updates.substring(ix);
+	return msg;
 }
 
 function verbose(msg) {

@@ -383,3 +383,8 @@ article:not(.pending) #status {
 small {
 	font-size: 10pt;
 }
+#takings {
+	position: fixed;
+	top: 0;
+	left: 0;
+}

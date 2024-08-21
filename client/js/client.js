@@ -627,5 +627,5 @@ $(async () => {
 	window.receipts = new Receipts();
 	window.romanClock = new RomanClock();
 	window.labels = new Labels();
-	analytics("Startup " + location.origin);
+	analytics("Startup " + window.configs.update);
 })
