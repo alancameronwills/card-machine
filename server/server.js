@@ -377,8 +377,8 @@ async function getUpdateLog() {
 	let updates = "No updates";
 	try { updates = await fs.readFile(updatesLog, { encoding: 'utf8' }); } catch {}
 	const s = "HEAD is now at ";
-	let ix = updates.lastIndexOf(s) + s.length;
-	let msg = updates.substring(ix);
+	let ix = updates.lastIndexOf(s);
+	let msg = updates.substring(ix >= 0 ? ix + s.length : updates.length-40);
 	return msg;
 }
 
