@@ -485,7 +485,7 @@ class Calendar {
 
 	calendarLoad(location, rows = 4) {
 		if (this.stopped) return;
-		let serviceWords = (window?.configs?.calendarWords || "communion prayer service vigil mass").split(" ");
+		let serviceWords = (window?.configs?.calendarWords || "communion prayer service matins vigil mass").split(" ");
 		fetch('/calendar')
 			.then(r => {
 				if (r.status == 444) {
