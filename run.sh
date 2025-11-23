@@ -11,8 +11,8 @@ cd `dirname $BASH_SOURCE`
 		mv -f log-update.log logs/log-update-`date +%m`.log 
 
 		# Truncate sales record
-		tail -q --lines=500 log-donations.txt > log-donations-1.txt 
-		mv -f log-donations-1.txt log-donations.txt
+		tail -q --lines=2000 log-donations.log > log-donations-1.log
+		mv -f log-donations-1.log log-donations.log
 	esac 
 ) &
 
