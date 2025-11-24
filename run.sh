@@ -4,16 +4,24 @@ cd `dirname $BASH_SOURCE`
 # Archive logs
 (
 	mkdir -p logs
- 	mv -f log-server.log logs/log-server-`date +%d`.log 
+    logfile="logs/log-server-`date +%d`.log"
+	day_ago=$(date -d 'now - 23 hours' +%s)
+	file_time=$(date -r "$logfile" +%s)
 
- 	case `date +%d` in (01) # on 1st of month
+	if ((file_time < day_ago)) 
+	then
+	
+ 		mv -f log-server.log $logfile 
 
-		mv -f log-update.log logs/log-update-`date +%m`.log 
+	 	case `date +%d` in (01) # on 1st of month
 
-		# Truncate sales record
-		tail -q --lines=2000 log-donations.log > log-donations-1.log
-		mv -f log-donations-1.log log-donations.log
-	esac 
+			mv -f log-update.log logs/log-update-`date +%m`.log 
+
+			# Truncate sales record
+			tail -q --lines=2000 log-donations.log > log-donations-1.log
+			mv -f log-donations-1.log log-donations.log
+		esac
+	fi 
 ) &
 
 # Copy latest code from git folder
