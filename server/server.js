@@ -35,7 +35,7 @@ const contentTypes = {
 	// to a nominated phone number. Wrapped so a failure here never affects donations.
 	try {
 		if (credentials.smsRelay) {
-			require('./sms-relay').start(credentials.smsRelay, log, root);
+			require('./sms-relay').start(credentials.smsRelay, log, root, credentials.churchName);
 		}
 	} catch (err) {
 		log("SMS relay failed to start: " + util.inspect(err));

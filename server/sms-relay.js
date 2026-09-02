@@ -32,6 +32,7 @@ const DC2 = String.fromCharCode(0x12); // the router encodes newlines within a f
 const POLL_INTERVAL_MS = 90 * 1000;
 const FIRST_POLL_DELAY_MS = 15 * 1000; // let networking settle after boot
 const SEEN_LIMIT = 100;                // how many relayed-message keys we remember
+const SMS_MAX_LENGTH = 160;            // single GSM-7 SMS; a lone message longer than this splits off its header
 
 /* ------------------------------------------------------------------ *
  * Crypto: RSA-512 (custom no-padding) using native BigInt, AES-128-CBC
@@ -371,20 +372,49 @@ async function saveSeen(fs, path, seen) {
 	} catch { /* best effort; a failed write just means we may re-relay after a restart */ }
 }
 
-function formatRelay(m) {
-	// Keep the prefix short; long messages will be split/handled by the router.
-	return `SMS to church SIM from ${m.from}: ${m.content}`;
+// Decide the sequence of SMS to send for a batch of freshly-received messages (oldest first).
+// Each step is { body, markIndex }, where markIndex is the index into `messages` that the step
+// delivers (so it can be marked relayed once sent), or null for a stand-alone header.
+//
+// Consecutive messages from the same sender form a group with header
+// "Relayed via <churchName> from <sender>:". A lone message keeps its header in the same SMS as
+// the text (the usual case), unless that would exceed one SMS, in which case the header is sent
+// first on its own. A group of several messages gets one stand-alone header, then each content.
+function planRelaySms(churchName, messages, maxLen = SMS_MAX_LENGTH) {
+	const plan = [];
+	let i = 0;
+	while (i < messages.length) {
+		const from = messages[i].from;
+		let j = i;
+		while (j < messages.length && messages[j].from === from) j++; // extent of same-sender run
+		const header = `Relayed via ${churchName} from ${from}:`;
+		if (j - i === 1) {
+			const combined = `${header} ${messages[i].content}`;
+			if (combined.length <= maxLen) {
+				plan.push({ body: combined, markIndex: i });
+			} else {
+				plan.push({ body: header, markIndex: null });
+				plan.push({ body: messages[i].content, markIndex: i });
+			}
+		} else {
+			plan.push({ body: header, markIndex: null });
+			for (let k = i; k < j; k++) plan.push({ body: messages[k].content, markIndex: k });
+		}
+		i = j;
+	}
+	return plan;
 }
 
 /**
  * Start the SMS relay. Never throws; logs and keeps retrying on the poll interval.
  *
- * @param {object} config   The `smsRelay` object from the local card-machine.config
- *                          { to, password, url?, login? }
- * @param {function} log    server.js's log(msg) function
- * @param {string} root     repo root (for the persisted seen-keys file)
+ * @param {object} config     The `smsRelay` object from the local card-machine.config
+ *                            { to, password, url?, login? }
+ * @param {function} log      server.js's log(msg) function
+ * @param {string} root       repo root (for the persisted seen-keys file)
+ * @param {string} churchName friendly site name, used in the "Relayed from ..." prefix
  */
-function start(config, log, root) {
+function start(config, log, root, churchName) {
 	log = log || ((m) => console.log(m));
 	if (!config || !config.to || !config.password) {
 		log('SMS relay: smsRelay config needs at least { to, password } - relay not started');
@@ -393,6 +423,7 @@ function start(config, log, root) {
 	const fs = require('fs/promises');
 	const url = config.url || 'http://192.168.1.1';
 	const login = config.login || 'admin';
+	const site = churchName || 'the church';
 	const seenPath = `${root}/sms-relay-seen.json`;
 	const client = new RouterClient(url, login, config.password, log);
 
@@ -415,11 +446,16 @@ function start(config, log, root) {
 
 			// Oldest first, so the forward order matches arrival order.
 			const fresh = inbox.filter(m => !state.seen.has(messageKey(m))).reverse();
-			for (const m of fresh) {
-				await client.sendSms(config.to, formatRelay(m));
-				state.seen.add(messageKey(m));
-				await saveSeen(fs, seenPath, state.seen);
-				log(`SMS relay: forwarded message from ${m.from} to ${config.to}`);
+			for (const step of planRelaySms(site, fresh)) {
+				await client.sendSms(config.to, step.body);
+				if (step.markIndex === null) {
+					log(`SMS relay: sent header "${step.body}" to ${config.to}`);
+				} else {
+					const m = fresh[step.markIndex];
+					state.seen.add(messageKey(m));
+					await saveSeen(fs, seenPath, state.seen);
+					log(`SMS relay: forwarded message from ${m.from} to ${config.to}`);
+				}
 			}
 		} catch (err) {
 			// Force a fresh login next time and try again on the next tick.
@@ -434,7 +470,7 @@ function start(config, log, root) {
 	}, FIRST_POLL_DELAY_MS);
 }
 
-module.exports = { start, RouterClient, rsaEncrypt, makeDataFrame, fromDataFrame, messageKey, loadSeen, saveSeen, SEEN_LIMIT };
+module.exports = { start, RouterClient, rsaEncrypt, makeDataFrame, fromDataFrame, messageKey, loadSeen, saveSeen, planRelaySms, SEEN_LIMIT, SMS_MAX_LENGTH };
 
 /* ------------------------------------------------------------------ *
  * CLI test harness

@@ -60,7 +60,11 @@ Content of this directory:
     * `strings` - `en` and `cy` versions of labelled strings
     * `smsRelay` - if present, polls the 4G LTE router (TP-Link / Archer) every 90s and
       forwards any newly-received SMS on to a nominated phone number, by asking the router
-      to send an SMS. Runs independently of the kiosk. It is an object:
+      to send an SMS. Relayed text is headed `Relayed via <churchName> from <sender's number>:`.
+      A lone message keeps that header in the same SMS as the text (unless the two together
+      exceed one SMS, when the header is sent first on its own). When several messages arrive
+      together, consecutive ones from the same sender share a single header SMS ahead of them.
+      Runs independently of the kiosk. It is an object:
         * `to` - destination phone number, e.g. `"+447700900123"` (required)
         * `password` - the router's admin password (required)
         * `url` - router address (optional, default `"http://192.168.1.1"`)
