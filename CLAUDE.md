@@ -53,6 +53,26 @@ Actions: default=create checkout (`terminals/checkouts`), `ping` (`terminals/act
 PING), `cancel`, `login` (`devices/codes` — used by `client/code.html` to enroll a reader).
 Amounts are in pence, GBP hard-coded.
 
+## SMS relay (`server/sms-relay.js`)
+
+Optional, started from `server.js` only when the credential `smsRelay` object is present,
+inside a try/catch so it can never disrupt the kiosk. It polls the site's TP-Link / Archer
+4G router every 90s and forwards newly-received SMS to a configured number by having the
+router send an SMS. See README.md for the `smsRelay` config shape.
+
+Self-contained and **dependency-free on purpose** (the project ships no `node_modules`): it
+ports TP-Link's encrypted "GDPR" CGI protocol — RSA-512-signed, AES-128-CBC `cgi_gdpr`
+command frames — using only Node built-ins, with native `BigInt` replacing `jsbn` and the
+`http`/`https` modules replacing `axios`. Ported from
+https://github.com/cmer81/tp-link-modem-sms-api. Faithful quirks to keep for router
+compatibility: the RSA exponent is parsed as hex (`"010001"` → 65537) and the signature
+carries a literal `h=undefined` (the reference never sets a password hash). POSTs must send
+`Content-Length` or the firmware resets the connection.
+
+First run baselines the existing inbox (not forwarded); relayed-message keys persist to
+`sms-relay-seen.json` (repo root, gitignored) so restarts don't re-send. Test against real
+hardware with `node server/sms-relay.js <url> <login> <password> [<forwardTo>]`.
+
 ## Client architecture (`client/js/client.js`)
 
 Loaded by `client/index.html`. All tunable timings live at the top of the file.

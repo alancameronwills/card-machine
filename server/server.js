@@ -31,6 +31,16 @@ const contentTypes = {
 	const credentials = await getCredentials(root, argv?.[3]);
 	verbose(JSON.stringify(credentials));
 
+	// Optional, independent of the kiosk: relay SMS received on the 4G router's SIM
+	// to a nominated phone number. Wrapped so a failure here never affects donations.
+	try {
+		if (credentials.smsRelay) {
+			require('./sms-relay').start(credentials.smsRelay, log, root);
+		}
+	} catch (err) {
+		log("SMS relay failed to start: " + util.inspect(err));
+	}
+
 	const handlers = {
 		"get-url": getUrl,
 		"card-operation": cardOperation,

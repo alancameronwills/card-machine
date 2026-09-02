@@ -5,5 +5,6 @@
 /server/package.json
 /go.cmd
 /log-*
+/sms-relay-seen.json
 /.gitignore
 .*

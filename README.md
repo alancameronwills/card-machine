@@ -58,7 +58,18 @@ Content of this directory:
     * `plea` - 
     * `offline` - html segment to show instead of money buttons
     * `strings` - `en` and `cy` versions of labelled strings
-    * `smsRelay` - if present, polls the 4G router for SMS messages
+    * `smsRelay` - if present, polls the 4G LTE router (TP-Link / Archer) every 90s and
+      forwards any newly-received SMS on to a nominated phone number, by asking the router
+      to send an SMS. Runs independently of the kiosk. It is an object:
+        * `to` - destination phone number, e.g. `"+447700900123"` (required)
+        * `password` - the router's admin password (required)
+        * `url` - router address (optional, default `"http://192.168.1.1"`)
+        * `login` - router admin username (optional, default `"admin"`)
+      On first run the existing inbox is taken as a baseline (not forwarded); only messages
+      arriving afterwards are relayed. Relayed-message keys are remembered in
+      `sms-relay-seen.json` (repo root, gitignored) so a restart does not re-send them.
+      Test against a real router with:
+      `node server/sms-relay.js <url> <login> <password> [<forwardTo>]`
 
 * ~/.config/autostart/run-donations.desktop - X-Windows config file starts card-machine/run.sh on power up :
 [Desktop Entry]
