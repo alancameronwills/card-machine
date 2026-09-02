@@ -43,5 +43,25 @@ Content of this directory:
   Credentials specific to the machine. 
 		Includes the ID of the card terminal, account credentials for SquareUp.
 		No copy of this file on GitHub.
+    * `deviceId` - of the Square card reader
+    *  `auth` - from Square
+    * `applicationId`
+    * `signatureKey`
+    * `appInsightsId` - same for each box
+    * `appInsightsApiKey` - same for each box
+    * `googleApiKey` - If present, extracts and displays info from calendar
+    * `googleCalendar` - calendar id
+    * `calendarWords` - Displays only items containing one of these terms
+    * `code` - where to get nightly refresh of this code
+    * `location` - id used to record distinct analytics
+    * `churchName` - friendly name of location
+    * `plea` - 
+    * `offline` - html segment to show instead of money buttons
+    * `strings` - `en` and `cy` versions of labelled strings
+    * `smsRelay` - if present, polls the 4G router for SMS messages
 
-* ~/.config/autostart/run-donations.desktop - X-Windows config file starts card-machine/run.sh on power up
+* ~/.config/autostart/run-donations.desktop - X-Windows config file starts card-machine/run.sh on power up :
+[Desktop Entry]
+Name=Fullscreen browser
+Exec=/home/pi/card-machine/run.sh
+Type=Application
