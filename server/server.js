@@ -25,7 +25,7 @@ const contentTypes = {
 	let root = await fs.realpath('.');
 	root = root.replace("/server", "").replace("\\server", "");
 	donationLog = `${root}/log-donations.log`;
-	updatesLog = `${root}/log-update.log`;
+	updatesLog = `${root}/log-src-version.log`;
 	const clientRoot = `${root}/client`;
 	log("Client root: " + clientRoot);
 	const credentials = await getCredentials(root, argv?.[3]);
