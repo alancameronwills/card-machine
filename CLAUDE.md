@@ -60,6 +60,13 @@ inside a try/catch so it can never disrupt the kiosk. It polls the site's TP-Lin
 4G router every 90s and forwards newly-received SMS to a configured number by having the
 router send an SMS. See README.md for the `smsRelay` config shape.
 
+`smsRelay.to` may be a list: a whitelist of numbers, any of which can text the SIM to redirect
+future relays to itself (`+44` and a leading `0` compare equal - see `normalizeNumber()`). The
+live destination is persisted in `sms-relay-seen.json` beside the seen keys and is **never**
+written back to the config file. Messages arriving from the destination number itself are
+relayed only `ECHO_LIMIT` (2) times per start-up or redirect, to break auto-responder loops;
+that budget is in memory only, so a reboot re-arms it.
+
 Self-contained and **dependency-free on purpose** (the project ships no `node_modules`): it
 ports TP-Link's encrypted "GDPR" CGI protocol — RSA-512-signed, AES-128-CBC `cgi_gdpr`
 command frames — using only Node built-ins, with native `BigInt` replacing `jsbn` and the

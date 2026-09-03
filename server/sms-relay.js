@@ -33,6 +33,8 @@ const POLL_INTERVAL_MS = 90 * 1000;
 const FIRST_POLL_DELAY_MS = 15 * 1000; // let networking settle after boot
 const SEEN_LIMIT = 100;                // how many relayed-message keys we remember
 const SMS_MAX_LENGTH = 160;            // single GSM-7 SMS; a lone message longer than this splits off its header
+const ECHO_LIMIT = 2;                  // relays back to the destination number itself allowed after each
+                                       // start-up or redirect, so an auto-responder cannot loop
 
 /* ------------------------------------------------------------------ *
  * Crypto: RSA-512 (custom no-padding) using native BigInt, AES-128-CBC
@@ -357,18 +359,33 @@ function messageKey(m) {
 	return `${m.receivedTime}|${m.from}|${crypto.createHash('md5').update(m.content).digest('hex')}`;
 }
 
+// Canonical form for comparing phone numbers. A UK number means the same thing whether it is
+// written with the +44 country code or a leading zero, so "+447700900123", "0044 7700 900123"
+// and "447700900123" (the router sometimes drops the "+") all come out as "07700900123".
+// Anything else - foreign numbers, or the operator's alphanumeric short codes - is simply
+// stripped of punctuation, so comparison still works.
+function normalizeNumber(n) {
+	let s = String(n == null ? '' : n).replace(/[\s()\-.]/g, '');
+	if (s.startsWith('00')) s = '+' + s.slice(2);
+	if (s.startsWith('+44')) return '0' + s.slice(3);
+	if (/^44\d{10}$/.test(s)) return '0' + s.slice(2);
+	return s;
+}
+
 async function loadSeen(fs, path) {
 	try {
 		const parsed = JSON.parse(await fs.readFile(path, 'utf8'));
-		if (Array.isArray(parsed.seen)) return { seen: new Set(parsed.seen), initialized: true };
+		if (Array.isArray(parsed.seen)) return { seen: new Set(parsed.seen), initialized: true, to: parsed.to };
 	} catch { /* no file yet */ }
-	return { seen: new Set(), initialized: false };
+	return { seen: new Set(), initialized: false, to: undefined };
 }
 
-async function saveSeen(fs, path, seen) {
-	const arr = Array.from(seen).slice(-SEEN_LIMIT);
+// The live relay destination is kept here alongside the seen keys: it can be changed by SMS
+// (see start()) and has to survive a restart, but must never be written back to the config file.
+async function saveState(fs, path, state) {
+	const arr = Array.from(state.seen).slice(-SEEN_LIMIT);
 	try {
-		await fs.writeFile(path, JSON.stringify({ seen: arr }));
+		await fs.writeFile(path, JSON.stringify({ seen: arr, to: state.to }));
 	} catch { /* best effort; a failed write just means we may re-relay after a restart */ }
 }
 
@@ -409,14 +426,18 @@ function planRelaySms(churchName, messages, maxLen = SMS_MAX_LENGTH) {
  * Start the SMS relay. Never throws; logs and keeps retrying on the poll interval.
  *
  * @param {object} config     The `smsRelay` object from the local card-machine.config
- *                            { to, password, url?, login? }
+ *                            { to, password, url?, login? }, where `to` is one number or a
+ *                            whitelist of numbers (the first is the default destination)
  * @param {function} log      server.js's log(msg) function
- * @param {string} root       repo root (for the persisted seen-keys file)
+ * @param {string} root       repo root (for the persisted state file)
  * @param {string} churchName friendly site name, used in the "Relayed from ..." prefix
  */
 function start(config, log, root, churchName) {
 	log = log || ((m) => console.log(m));
-	if (!config || !config.to || !config.password) {
+	// `to` is a whitelist: the first entry is the default destination, and any of them can text
+	// the SIM to redirect future relays to itself.
+	const whitelist = (config && config.to ? [].concat(config.to) : []).filter(n => n);
+	if (!whitelist.length || !config.password) {
 		log('SMS relay: smsRelay config needs at least { to, password } - relay not started');
 		return;
 	}
@@ -426,12 +447,39 @@ function start(config, log, root, churchName) {
 	const site = churchName || 'the church';
 	const seenPath = `${root}/sms-relay-seen.json`;
 	const client = new RouterClient(url, login, config.password, log);
+	const normalizedWhitelist = whitelist.map(normalizeNumber);
+	// The whitelist's own spelling of a number, or undefined if it isn't whitelisted.
+	const whitelistEntry = from => whitelist[normalizedWhitelist.indexOf(normalizeNumber(from))];
 
-	let state = null; // { seen, initialized }, loaded lazily on first poll
+	let state = null;            // { seen, initialized, to }, loaded lazily on first poll
+	let echoBudget = ECHO_LIMIT; // messages still relayable back to the destination number itself
+
+	// Forward a run of messages to the current destination, remembering each one as it goes.
+	async function relay(messages) {
+		for (const step of planRelaySms(site, messages)) {
+			await client.sendSms(state.to, step.body);
+			if (step.markIndex === null) {
+				log(`SMS relay: sent header "${step.body}" to ${state.to}`);
+			} else {
+				const m = messages[step.markIndex];
+				state.seen.add(messageKey(m));
+				await saveState(fs, seenPath, state);
+				log(`SMS relay: forwarded message from ${m.from} to ${state.to}`);
+			}
+		}
+	}
 
 	async function poll() {
 		try {
-			if (!state) state = await loadSeen(fs, seenPath);
+			if (!state) {
+				state = await loadSeen(fs, seenPath);
+				// A destination remembered from a previous run stands only while it is still
+				// whitelisted; otherwise the config's first number takes over again.
+				const remembered = state.to && whitelistEntry(state.to);
+				if (state.to && !remembered) log(`SMS relay: remembered destination ${state.to} is no longer whitelisted`);
+				state.to = remembered || whitelist[0];
+				log(`SMS relay: forwarding to ${state.to} (whitelist: ${whitelist.join(', ')})`);
+			}
 			const inbox = await client.readInbox();
 
 			if (!state.initialized) {
@@ -439,24 +487,41 @@ function start(config, log, root, churchName) {
 				// backlog of old messages. Only messages arriving from now on get relayed.
 				for (const m of inbox) state.seen.add(messageKey(m));
 				state.initialized = true;
-				await saveSeen(fs, seenPath, state.seen);
-				log(`SMS relay: baselined ${inbox.length} existing message(s); forwarding new ones to ${config.to}`);
+				await saveState(fs, seenPath, state);
+				log(`SMS relay: baselined ${inbox.length} existing message(s); forwarding new ones to ${state.to}`);
 				return;
 			}
 
 			// Oldest first, so the forward order matches arrival order.
 			const fresh = inbox.filter(m => !state.seen.has(messageKey(m))).reverse();
-			for (const step of planRelaySms(site, fresh)) {
-				await client.sendSms(config.to, step.body);
-				if (step.markIndex === null) {
-					log(`SMS relay: sent header "${step.body}" to ${config.to}`);
-				} else {
-					const m = fresh[step.markIndex];
-					state.seen.add(messageKey(m));
-					await saveSeen(fs, seenPath, state.seen);
-					log(`SMS relay: forwarded message from ${m.from} to ${config.to}`);
+			let batch = []; // messages queued for the current destination
+			for (const m of fresh) {
+				const entry = whitelistEntry(m.from);
+				if (entry && normalizeNumber(entry) != normalizeNumber(state.to)) {
+					// A whitelisted number has texted in: deliver anything already queued to the
+					// old destination, then redirect. The text itself goes on to the new
+					// destination below, echoing back to the sender as proof the switch worked.
+					await relay(batch);
+					batch = [];
+					state.to = entry;
+					echoBudget = ECHO_LIMIT;
+					await saveState(fs, seenPath, state);
+					log(`SMS relay: destination changed to ${state.to} by SMS from ${m.from}`);
 				}
+				if (normalizeNumber(m.from) == normalizeNumber(state.to)) {
+					// Relaying a message straight back to where it came from risks a ping-pong with
+					// an auto-responder, so allow only a couple since the last start-up or redirect.
+					if (echoBudget <= 0) {
+						state.seen.add(messageKey(m));
+						await saveState(fs, seenPath, state);
+						log(`SMS relay: ignoring message from destination ${m.from} (echo limit reached)`);
+						continue;
+					}
+					echoBudget--;
+				}
+				batch.push(m);
 			}
+			await relay(batch);
 		} catch (err) {
 			// Force a fresh login next time and try again on the next tick.
 			client.reset();
@@ -464,13 +529,13 @@ function start(config, log, root, churchName) {
 		}
 	}
 
-	log(`SMS relay: enabled, polling ${url} every ${POLL_INTERVAL_MS / 1000}s, forwarding to ${config.to}`);
+	log(`SMS relay: enabled, polling ${url} every ${POLL_INTERVAL_MS / 1000}s, whitelist: ${whitelist.join(', ')}`);
 	setTimeout(function tick() {
 		poll().finally(() => setTimeout(tick, POLL_INTERVAL_MS));
 	}, FIRST_POLL_DELAY_MS);
 }
 
-module.exports = { start, RouterClient, rsaEncrypt, makeDataFrame, fromDataFrame, messageKey, loadSeen, saveSeen, planRelaySms, SEEN_LIMIT, SMS_MAX_LENGTH };
+module.exports = { start, RouterClient, rsaEncrypt, makeDataFrame, fromDataFrame, messageKey, normalizeNumber, loadSeen, saveState, planRelaySms, SEEN_LIMIT, SMS_MAX_LENGTH, ECHO_LIMIT };
 
 /* ------------------------------------------------------------------ *
  * CLI test harness

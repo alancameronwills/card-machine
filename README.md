@@ -65,13 +65,24 @@ Content of this directory:
       exceed one SMS, when the header is sent first on its own). When several messages arrive
       together, consecutive ones from the same sender share a single header SMS ahead of them.
       Runs independently of the kiosk. It is an object:
-        * `to` - destination phone number, e.g. `"+447700900123"` (required)
+        * `to` - destination phone number, e.g. `"+447700900123"`, or a list of numbers,
+          e.g. `["+447700900123", "07700900456"]` (required). A list acts as a whitelist: the
+          first number is the default destination, and any number in the list can text the
+          router's SIM to redirect all future relays to itself. That text is passed on to the
+          new destination too, so the sender sees it come straight back as confirmation.
+          `+44` and an initial `0` count as the same number. The current destination is
+          remembered in `sms-relay-seen.json` - never written back to this config file - so it
+          survives a reboot; if it is no longer in the list (because the list has been edited)
+          the first number takes over again.
         * `password` - the router's admin password (required)
         * `url` - router address (optional, default `"http://192.168.1.1"`)
         * `login` - router admin username (optional, default `"admin"`)
       On first run the existing inbox is taken as a baseline (not forwarded); only messages
       arriving afterwards are relayed. Relayed-message keys are remembered in
       `sms-relay-seen.json` (repo root, gitignored) so a restart does not re-send them.
+      To avoid a ping-pong with an auto-responder at the far end, messages received *from* the
+      current destination number are relayed only twice after each start-up or redirect, and
+      ignored after that.
       Test against a real router with:
       `node server/sms-relay.js <url> <login> <password> [<forwardTo>]`
 
