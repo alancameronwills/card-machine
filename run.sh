@@ -24,22 +24,31 @@ cd `dirname $BASH_SOURCE`
 	fi 
 ) &
 
-# Copy latest code from git folder
-if test -d ~/src/card-machine ;
-then
-	cp -ruv ~/src/card-machine/* ~/card-machine
-fi
-
 # Allow WiFi router to start
 sleep 1m
 
-# Download latest code
-while true
-do
-	sleep 10m
+# Update code
+rm -f .codefetched
+(
+	# Download latest code
 	./fetch-code.sh
-	sleep 11h
-done >> log-update.log 2>&1 &
+	touch .codefetched
+) &
+
+# Wait for code for a limited period, then start anyway
+timeout 10 bash <<EOF
+  while [ ! -e .codefetched ] ; do sleep 1s; done
+EOF
+
+# if we've got the updates, use them
+if [ -e .codefetched ]
+then
+	# Copy latest code from git folder
+	if test -d ~/src/card-machine ;
+	then
+		cp -ruv ~/src/card-machine/* ~/card-machine
+	fi
+fi
 
 # Start server and client
 (cd server; ./server.sh) >>log-server.log 2>&1 &
