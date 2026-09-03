@@ -75,8 +75,33 @@ Content of this directory:
       Test against a real router with:
       `node server/sms-relay.js <url> <login> <password> [<forwardTo>]`
 
-* ~/.config/autostart/run-donations.desktop - X-Windows config file starts card-machine/run.sh on power up :
+
+## Setup
+1. Setup pi OS as standard.
+
+If testing on a larger screen, edit `/boot/firmware/config.txt` to constrain screen size to avoid memory problems. Insert:
+```
+framebuffer_width=1920
+framebuffer_height=1080
+```
+2. Login as user pi.
+3. Install nodejs
+4. Manually: 
+   * `mkdir ~/card-machine; cd card-machine`; 
+   * create `run.sh`, `fetch.sh`, `server/server.sh` 
+   * `chmod -R a+x *.sh`
+5. Allow getting files from github:
+```
+git config --global --add safe.directory /home/pi/src/card-machine
+```
+6. X-Windows config file starts card-machine/run.sh on power up :
+```
+sudo nano ~/.config/autostart/run-donations.desktop
+
 [Desktop Entry]
 Name=Fullscreen browser
 Exec=/home/pi/card-machine/run.sh
 Type=Application
+```
+7. Manually create `~/cred-local/card-machine.config`
+8. Reboot

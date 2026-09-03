@@ -23,7 +23,7 @@ const contentTypes = {
 
 (async () => {
 	let root = await fs.realpath('.');
-	root = root.replace("/server", "");
+	root = root.replace("/server", "").replace("\\server", "");
 	donationLog = `${root}/log-donations.log`;
 	updatesLog = `${root}/log-update.log`;
 	const clientRoot = `${root}/client`;
@@ -266,9 +266,14 @@ async function getCredentials(root, filter) {
 	let dir = await fs.readdir(root);
 	for (let item of dir) {
 		if (item.startsWith("cred-") && (!filter || item.indexOf(filter) >= 0)) {
+			try {
 			config = JSON.parse(await fs.readFile(`${root}/${item}/card-machine.config`));
+			} catch (err) {
+				log (`Error reading or parsing ${root}/${item}/card-machine.config: ${err}`);
+			}
 		}
 	}
+	if (!config?.location) log(`Missing ${root}/cred-*/card-machine.config or no location field`);
 	config.update = await getUpdateLog();
 	log(`${config?.churchName} ${config?.update} `);
 	return config;
